@@ -173,13 +173,13 @@ let VMConfigchema = new Schema({
         type: String,
     },
     ProcessorCount :{
-        type: String,
+        type: Number,
     },
     BatteryPassthroughEnabled :{
         type: Boolean,
     },
     Generation :{
-        type: String,
+        type: Number,
     },
     IsClustered :{
         type: Boolean,
