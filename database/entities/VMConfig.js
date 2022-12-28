@@ -7,6 +7,7 @@ let VMConfigchema = new Schema(
   {
     ParentCheckpointId: {
       type: String,
+      
     },
     ParentCheckpointName: {
       type: String,
@@ -16,7 +17,7 @@ let VMConfigchema = new Schema(
     },
     VMId: {
       type: String,
-      unique: true,
+      // unique: true,
     },
     CheckpointFileLocation: {
       type: String,
