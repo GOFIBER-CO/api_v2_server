@@ -7,7 +7,6 @@ let VMConfigchema = new Schema(
   {
     ParentCheckpointId: {
       type: String,
-      
     },
     ParentCheckpointName: {
       type: String,
@@ -243,6 +242,10 @@ let VMConfigchema = new Schema(
     updatedTime: {
       type: Date,
     },
+    // ssd : 30
+    fileSize:{
+      type:Number
+    }
   },
   { versionKey: false }
 );
