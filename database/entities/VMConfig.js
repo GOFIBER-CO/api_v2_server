@@ -151,7 +151,88 @@ let VMConfigchema = new Schema({
     FloppyDrive :{
         type: String,
     },
-    
+    HardDrives :{
+        type: String,
+    },
+    RemoteFxAdapter :{
+        type: String,
+    },
+    VMIntegrationService :{
+        type: String,
+    },
+    DynamicMemoryEnabled :{
+        type: String,
+    },
+    MemoryMaximum :{
+        type: String,
+    },
+    MemoryMinimum :{
+        type: String,
+    },
+    MemoryStartup :{
+        type: String,
+    },
+    ProcessorCount :{
+        type: String,
+    },
+    BatteryPassthroughEnabled :{
+        type: Boolean,
+    },
+    Generation :{
+        type: String,
+    },
+    IsClustered :{
+        type: Boolean,
+    },
+    ParentSnapshotId :{
+        type: String,
+    },
+    ParentSnapshotName :{
+        type: String,
+    },
+    Path :{
+        type: String,
+    },
+    SizeOfSystemFiles :{
+        type: String,
+    },
+    GuestControlledCacheTypes :{
+        type: Boolean,
+    },
+    LowMemoryMappedIoSpace :{
+        type: String,
+    },
+    HighMemoryMappedIoSpace  :{
+        type: String,
+    },
+    HighMemoryMappedIoBaseAddress  :{
+        type: String,
+    },
+    LockOnDisconnect  :{
+        type: String,
+    },
+    CreationTime  :{
+        type: String,
+    },
+    Id  :{
+        type: String,
+    },
+    Name  :{
+        type: String,
+    },
+    NetworkAdapters  :{
+        type: String,
+    },
+    CimSession  :{
+        type: String,
+    },
+    ComputerName  :{
+        type: String,
+    },
+    IsDeleted  :{
+        type: Boolean,
+    },
+
     createdTime: {
         type: Date,
         default: Date.now
