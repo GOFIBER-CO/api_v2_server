@@ -1,166 +1,170 @@
-require('../database');
-const mongoose = require('mongoose');
+require("../database");
+const mongoose = require("mongoose");
 
 const { Schema } = mongoose;
 
-let VMConfigchema = new Schema({
+let VMConfigchema = new Schema(
+  {
     ParentCheckpointId: {
-        type: String,
+      type: String,
     },
     ParentCheckpointName: {
-        type: String,
+      type: String,
     },
-    VMName :{
-        type: String,
+    VMName: {
+      type: String,
     },
-    VMId :{
-        type: String,
+    VMId: {
+      type: String,
+      unique: true,
     },
-    CheckpointFileLocation :{
-        type: String,
+    CheckpointFileLocation: {
+      type: String,
     },
-    ConfigurationLocation :{
-        type: String,
+    ConfigurationLocation: {
+      type: String,
     },
-    SmartPagingFileInUse :{
-        type: Boolean,
+    SmartPagingFileInUse: {
+      type: Boolean,
     },
-    SmartPagingFilePath :{
-        type: String,
+    SmartPagingFilePath: {
+      type: String,
     },
-    SnapshotFileLocation :{
-        type: String,
+    SnapshotFileLocation: {
+      type: String,
     },
-    AutomaticStartAction :{
-        type: String,
+    AutomaticStartAction: {
+      type: String,
     },
-    AutomaticStartDelay :{
-        type: Number,
+    AutomaticStartDelay: {
+      type: Number,
     },
-    AutomaticStopAction :{
-        type: String,
+    AutomaticStopAction: {
+      type: String,
     },
-    AutomaticCriticalErrorAction :{
-        type: String,
+    AutomaticCriticalErrorAction: {
+      type: String,
     },
-    AutomaticCriticalErrorActionTimeout :{
-        type: Number,
+    AutomaticCriticalErrorActionTimeout: {
+      type: Number,
     },
-    AutomaticCheckpointsEnabled :{
-        type: Boolean,
+    AutomaticCheckpointsEnabled: {
+      type: Boolean,
     },
-    CPUUsage  :{
-        type: Number,
+    CPUUsage: {
+      type: Number,
     },
-    MemoryAssigned:{
-        type: Number,
+    MemoryAssigned: {
+      type: Number,
     },
-    MemoryDemand:{
-        type: String,
+    MemoryDemand: {
+      type: String,
     },
-    NumaAligned:{
-        type: String,
+    NumaAligned: {
+      type: String,
     },
-    NumaNodesCount:{
-        type: Number,
+    NumaNodesCount: {
+      type: Number,
     },
-    NumaSocketCount:{
-        type: Number,
+    NumaSocketCount: {
+      type: Number,
     },
-    Heartbeat:{
-        type: String,
+    Heartbeat: {
+      type: String,
     },
-    IntegrationServicesState :{
-        type: String,
+    IntegrationServicesState: {
+      type: String,
     },
-    IntegrationServicesVersion :{
-        type: String,
+    IntegrationServicesVersion: {
+      type: String,
     },
-    Uptime:{
-        type: String,
+    Uptime: {
+      type: String,
     },
-    OperationalStatus:{
-        type: String,
+    OperationalStatus: {
+      type: String,
     },
-    PrimaryOperationalStatus:{
-        type: String,
+    PrimaryOperationalStatus: {
+      type: String,
     },
-    SecondaryOperationalStatus:{
-        type: String,
+    SecondaryOperationalStatus: {
+      type: String,
     },
-    StatusDescriptions:{
-        type: String,
+    StatusDescriptions: {
+      type: String,
     },
-    PrimaryStatusDescription:{
-        type: String,
+    PrimaryStatusDescription: {
+      type: String,
     },
-    SecondaryStatusDescription:{
-        type: String,
+    SecondaryStatusDescription: {
+      type: String,
     },
-    Status:{
-        type: String,
+    Status: {
+      type: String,
     },
-    ReplicationHealth:{
-        type: String,
+    ReplicationHealth: {
+      type: String,
     },
-    ReplicationMode:{
-        type: String,
+    ReplicationMode: {
+      type: String,
     },
-    ReplicationState:{
-        type: String,
+    ReplicationState: {
+      type: String,
     },
-    ResourceMeteringEnabled:{
-        type: Boolean,
+    ResourceMeteringEnabled: {
+      type: Boolean,
     },
-    CheckpointType:{
-        type: String,
+    CheckpointType: {
+      type: String,
     },
-    EnhancedSessionTransportType:{
-        type: String,
+    EnhancedSessionTransportType: {
+      type: String,
     },
-    Groups:{
-        type: String,
+    Groups: {
+      type: String,
     },
-    Version:{
-        type: String,
+    Version: {
+      type: String,
     },
-    VirtualMachineType:{
-        type: String,
+    VirtualMachineType: {
+      type: String,
     },
-    VirtualMachineSubType:{
-        type: String,
+    VirtualMachineSubType: {
+      type: String,
     },
-    Notes :{
-        type: String,
+    Notes: {
+      type: String,
     },
-    State :{
-        type: String,
+    State: {
+      type: String,
     },
-    ComPort1 :{
-        type: String,
+    ComPort1: {
+      type: String,
     },
-    ComPort2 :{
-        type: String,
+    ComPort2: {
+      type: String,
     },
-    DVDDrives :{
-        type: String,
+    DVDDrives: {
+      type: String,
     },
-    FibreChannelHostBusAdapters :{
-        type: String,
+    FibreChannelHostBusAdapters: {
+      type: String,
     },
-    FloppyDrive :{
-        type: String,
+    FloppyDrive: {
+      type: String,
     },
-    
+
     createdTime: {
-        type: Date,
-        default: Date.now
+      type: Date,
+      default: Date.now,
     },
     updatedTime: {
-        type: Date
+      type: Date,
     },
-}, {versionKey: false});
+  },
+  { versionKey: false }
+);
 
-VMConfigchema.index({'VMName': 'text'});
+VMConfigchema.index({ VMName: "text" });
 
-module.exports = mongoose.model('VMConfig', VMConfigchema)
+module.exports = mongoose.model("VMConfig", VMConfigchema);
