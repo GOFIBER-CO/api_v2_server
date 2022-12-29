@@ -18,7 +18,6 @@ let CloudServerchema = new Schema({
     },
     port: {
         type: String,
-        required: true,
     },
     user: {
         type: Schema.Types.ObjectId,
@@ -53,10 +52,6 @@ let CloudServerchema = new Schema({
     },
     updatedTime: {
         type: Date
-    },
-    isDeleted: {
-        type: Boolean,
-        default: false,
     },
     isAutoRenew: {
         type: Boolean, 

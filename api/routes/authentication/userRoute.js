@@ -19,5 +19,6 @@ router.post('/verify2FaToken',  middlewares.authentication, userController.verif
 router.post('/login2Fa',  middlewares.authentication,userController.login2Fa)
 router.get('/surplus/:id', middlewares.authentication,userController.getSurplus)
 router.get('/getAllUser', middlewares.authorize, userController.getAllUser)
+router.patch('/disabled2fa/:id', middlewares.authentication, userController.disabled2Fa)
 
 module.exports = router;

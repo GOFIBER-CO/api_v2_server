@@ -190,7 +190,7 @@ async function insertCloudServer(req, res) {
 
     cloudServer.order = order._id;
 
-    await cloudServer.save(async function (err, newCloudServer) {
+     cloudServer.save(async function (err, newCloudServer) {
       if (err) {
         let response = new ResponseModel(-1, err.message, err);
         res.json(response);
@@ -280,7 +280,9 @@ async function deleteCloudServer(req, res) {
   // if (isValidObjectId(req.params.id)) {
   if (req.params.id) {
     try {
-      let cloudServer = await CloudServers.findByIdAndDelete(req.params.id);
+      let cloudServer = await CloudServers.findByIdAndUpdate(req.params.id, {
+        isDeleted: true
+      });
       if (!cloudServer) {
         let response = new ResponseModel(0, "No item found!", null);
         res.json(response);
@@ -306,7 +308,11 @@ async function deleteCloudServer(req, res) {
 async function getCloudServerById(req, res) {
   if (req.body.cloudServerId) {
     try {
-      let cloudServer = await CloudServers.findById(req.body.cloudServerId)
+      let cloudServer = await CloudServers.find({
+        _id: req.body.cloudServerId,
+        isDeleted: false,
+      }
+        )
         .populate("area")
         .populate("server")
         .populate("operatingSystem");
