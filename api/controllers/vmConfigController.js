@@ -4,9 +4,9 @@ const VMConfig = require("../../database/entities/VMConfig");
 
 async function insertVmConfig(req, res) {
   try {
-    const vnConfig = new VMConfig(req.body);
-    vnConfig.createdTime = Date.now();
-    vnConfig.save((err, newVnConfig) => {
+    const vmConfig = new VMConfig(req.body);
+    vmConfig.createdTime = Date.now();
+    vmConfig.save((err, newVmConfig) => {
       if (err) {
         let response = new ResponseModel(-1, err.message, err);
         res.json(response);
@@ -14,7 +14,7 @@ async function insertVmConfig(req, res) {
         let response = new ResponseModel(
           1,
           "Create VMConfig success!",
-          newVnConfig
+          newVmConfig
         );
         res.json(response);
       }
@@ -80,8 +80,8 @@ async function updateVmConfig(req, res) {
 async function getByVmConfigById(req, res) {
   const { id } = req.params;
   try {
-    const vnConfig = await VMConfig.findById(id);
-    res.json(vnConfig);
+    const vmConfig = await VMConfig.findById(id);
+    res.json(vmConfig);
   } catch (error) {
     let response = new ResponseModel(-2, error.message, error);
     res.json(response);
@@ -96,7 +96,7 @@ async function getPagingVmConfig(req, res) {
     // searchObj = { areaName: { $regex: ".*" + req.query.search + ".*" } };
   }
   try {
-    const vnConfig = await VMConfig.find(searchObj)
+    const vmConfig = await VMConfig.find(searchObj)
       .skip(pageSize * pageIndex - pageSize)
       .limit(parseInt(pageSize))
       .sort({
@@ -108,7 +108,7 @@ async function getPagingVmConfig(req, res) {
       pageIndex,
       pageSize,
       totalPages,
-      vnConfig,
+      vmConfig,
       count
     );
     res.json(pagedModel);
