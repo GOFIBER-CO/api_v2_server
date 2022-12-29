@@ -13,7 +13,6 @@ app.use(
     origin: origin,
   })
 );
-app.options("*", cors());
 app.use(fileUpload());
 app.use(express.static("public"));
 app.use(bodyParser.json({ limit: "50mb" }));
@@ -70,7 +69,9 @@ app.use("/api/vmConfig", vmConfigRoute);
 
 const server = require("http").Server(app);
 const io = require("socket.io")(server, {
-  cors: "*",
+  cors: {
+    origin: origin
+  },
 });
 
 autoRenewCloudServer();
