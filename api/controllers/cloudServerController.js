@@ -190,7 +190,7 @@ async function insertCloudServer(req, res) {
 
     cloudServer.order = order._id;
 
-     cloudServer.save(async function (err, newCloudServer) {
+    cloudServer.save(async function (err, newCloudServer) {
       if (err) {
         let response = new ResponseModel(-1, err.message, err);
         res.json(response);
@@ -281,7 +281,7 @@ async function deleteCloudServer(req, res) {
   if (req.params.id) {
     try {
       let cloudServer = await CloudServers.findByIdAndUpdate(req.params.id, {
-        isDeleted: true
+        isDeleted: true,
       });
       if (!cloudServer) {
         let response = new ResponseModel(0, "No item found!", null);
@@ -311,8 +311,7 @@ async function getCloudServerById(req, res) {
       let cloudServer = await CloudServers.find({
         _id: req.body.cloudServerId,
         isDeleted: false,
-      }
-        )
+      })
         .populate("area")
         .populate("server")
         .populate("operatingSystem");
@@ -1073,7 +1072,7 @@ async function notifyCloudServerAboutToExpire() {
   }
 }
 
-exports.notifyCloudServerAboutToExpire = notifyCloudServerAboutToExpire
+exports.notifyCloudServerAboutToExpire = notifyCloudServerAboutToExpire;
 exports.autoRenewCloudServer = autoRenewCloudServer;
 exports.insertCloudServer = insertCloudServer;
 exports.updateCloudServer = updateCloudServer;
