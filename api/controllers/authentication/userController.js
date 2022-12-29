@@ -505,7 +505,28 @@ async function getAllUser (req, res) {
   }
 }
 
+async function disabled2Fa(req, res){
+  try {
+    const user = await Users.findById(req.params.id)
+    if(user.password ==
+      crypto
+        .createHash("sha256", secretKey)
+        .update(req.body.password)
+        .digest("hex")){
+          const result = await Users.findByIdAndUpdate(req.params.id, {
+            isEnable2FaAuthenticate: false,
+          })
+          return res.status(200).json({message: "Tắt chức năng bảo mật 2 lớp thành công"})
+        }else{
+          return res.status(401).json({message: "Sai mật khẩu"})
+        }
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({message: "Có lỗi xảy ra"})
+  }
+}
 
+exports.disabled2Fa = disabled2Fa
 exports.getAllUser = getAllUser
 exports.login = login;
 exports.insertUser = insertUser;

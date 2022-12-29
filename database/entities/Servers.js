@@ -25,6 +25,9 @@ let ServerSchema = new Schema({
     ssd: {
         type: String,
     },
+    hdd: {
+        type: String,
+    },
     bandwidth: {
         type: String,
     },
