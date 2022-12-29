@@ -101,6 +101,7 @@ async function getAboutToExpireCloudServer(req, res) {
 }
 
 async function insertCloudServer(req, res) {
+  console.log(req.body);
   try {
     var dataNow = new Date();
     req.body.code = generateRandomString();
