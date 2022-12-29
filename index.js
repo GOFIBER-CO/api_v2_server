@@ -5,8 +5,7 @@ const morgan = require("morgan");
 const fileUpload = require("express-fileupload");
 var cors = require("cors");
 const app = express();
-// const origin = ['https://v2.vngserver.vn', 'http://localhost:3030']
-const origin = ["https://v2.vngserver.vn", "http://localhost:8078"];
+const origin = ['https://v2.vngserver.vn', 'http://localhost:3030', 'http://localhost:8078']
 
 app.use(morgan("combined"));
 app.use(
