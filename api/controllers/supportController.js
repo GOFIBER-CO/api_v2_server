@@ -125,10 +125,13 @@ async function getSupportById(req, res) {
 async function getPaging(req, res) {
   let pageSize = req.query.pageSize || 10;
   let pageIndex = req.query.pageIndex || 1;
-
+ 
   let searchObj = {};
   if(req.query.level != '0'){
     searchObj.level = req.query.level;
+  }
+  if (req.query.search) {
+    searchObj.supportName = { $regex: ".*" + req.query.search + ".*" };
   }
   try {
     let support = await Supports.find(searchObj).populate('processingRoom').populate('user').populate('modifiedBy').find()
@@ -162,8 +165,14 @@ async function getSupportByUserId(req, res) {
 
   let searchObj = {};
   
-  if (req.query.search) {
-    searchObj = { supportName: { $regex: ".*" + req.query.search + ".*" } };
+  if (req.query.supportName) {
+    searchObj = { supportName: { $regex: ".*" + req.query.supportName + ".*" } };
+  }
+  if(req.query.supportTT){
+    searchObj.status = req.query.supportTT;
+  }
+  if(req.query.supportUT && req.query.supportUT != 0){
+    searchObj.level = req.query.supportUT;
   }
   if(req.query.userId){
     searchObj.user = req.query.userId

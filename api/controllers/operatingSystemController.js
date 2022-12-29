@@ -1,17 +1,20 @@
 const PagedModel = require("../models/PagedModel");
 const ResponseModel = require("../models/ResponseModel");
 const OperatingSystems = require("../../database/entities/OperatingSystems");
-const path = require('path');
+const path = require("path");
 const generateRandomString = require("../../helpers/generateRandomString");
 
 async function insertOperatingSystem(req, res) {
   if (req.actions.includes("insertOperatingSystem")) {
     try {
       if (req.files?.file) {
-        const file = req.files.file
-        file.mv(path.join(__dirname, `../../public/UploadFiles/${file.name}`), (err) => {
-          console.log(err)
-        })
+        const file = req.files.file;
+        file.mv(
+          path.join(__dirname, `../../public/UploadFiles/${file.name}`),
+          (err) => {
+            console.log(err);
+          }
+        );
       }
       let operatingSystem = new OperatingSystems({
         operatingSystemName: req.body.operatingSystemName,
@@ -38,23 +41,30 @@ async function insertOperatingSystem(req, res) {
       let response = new ResponseModel(404, error.message, error);
       res.status(404).json(response);
     }
-  }else{
-    return res.status(403)
+  } else {
+    return res.status(403);
   }
 }
 async function updateOperatingSystem(req, res) {
   if (req.actions.includes("updateOperatingSystem")) {
     try {
       if (req.files?.file) {
-        const file = req.files?.file
-        file.mv(path.join(__dirname, `../../public/UploadFiles/${file.name}`), (err) => {
-          console.log(err)
-        })
+        const file = req.files?.file;
+        file.mv(
+          path.join(__dirname, `../../public/UploadFiles/${file.name}`),
+          (err) => {
+            console.log(err);
+          }
+        );
       }
-      let newOperatingSystem = { updatedTime: Date.now(), file: req.files?.file?.name, ...req.body };
+      let newOperatingSystem = {
+        updatedTime: Date.now(),
+        file: req.files?.file?.name,
+        ...req.body,
+      };
       let updatedOperatingSystem = await OperatingSystems.findOneAndUpdate(
         { _id: req.params.id },
-        newOperatingSystem,
+        newOperatingSystem
       );
       if (!updatedOperatingSystem) {
         let response = new ResponseModel(0, "No item found!", null);
@@ -68,18 +78,18 @@ async function updateOperatingSystem(req, res) {
         res.json(response);
       }
     } catch (error) {
-      console.log(error)
+      console.log(error);
       let response = new ResponseModel(404, error.message, error);
       res.status(404).json(response);
     }
-  }else{
-    return res.status(403)  
+  } else {
+    return res.status(403);
   }
 }
 
 async function deleteOperatingSystem(req, res) {
   // if (isValidObjectId(req.params.id)) {
-    if (req.actions.includes("deleteOperatingSystem")) {
+  if (req.actions.includes("deleteOperatingSystem")) {
     if (req.params.id) {
       try {
         let operatingSystem = await OperatingSystems.findByIdAndDelete(
@@ -105,10 +115,9 @@ async function deleteOperatingSystem(req, res) {
         .status(404)
         .json(new ResponseModel(404, "OperatingSystemId is not valid!", null));
     }
-    }
-    else {
-      res.sendStatus(403);
-    }
+  } else {
+    res.sendStatus(403);
+  }
 }
 
 async function getOperatingSystemById(req, res) {
@@ -146,20 +155,20 @@ async function getPaging(req, res) {
       .sort({
         createdTime: "desc",
       });
-    const returnArray = operatingSystem.map(item => {
+    const returnArray = operatingSystem.map((item) => {
       if (item.parentID) {
-        console.log(item)
-        const parent = operatingSystem.find(x => {
-          return x._id.toString() == item.parentID
-        })
+        console.log(item);
+        const parent = operatingSystem.find((x) => {
+          return x._id.toString() == item.parentID;
+        });
         const newItem = {
           ...item._doc,
-          parentName: parent?.operatingSystemName
-        }
-        return newItem
+          parentName: parent?.operatingSystemName,
+        };
+        return newItem;
       }
-      return item
-    })
+      return item;
+    });
 
     let count = await OperatingSystems.find(searchObj).countDocuments();
     let totalPages = Math.ceil(count / pageSize);
@@ -174,7 +183,7 @@ async function getPaging(req, res) {
   } catch (error) {
     let response = new ResponseModel(404, error.message, error);
     res.status(404).json(response);
-    console.log(error)
+    console.log(error);
   }
 }
 
@@ -196,17 +205,17 @@ async function getOperatingSystem(req, res) {
         createdTime: "desc",
       });
 
-    const returnArray = operatingSystem.map(item => {
+    const returnArray = operatingSystem.map((item) => {
       if (item.parentID) {
-        const parent = operatingSystem.find(x => x._id == item.parentID)
+        const parent = operatingSystem.find((x) => x._id == item.parentID);
         const newItem = {
           ...item._doc,
-          parentName: parent.operatingSystemName
-        }
-        return newItem
+          parentName: parent.operatingSystemName,
+        };
+        return newItem;
       }
-      return item
-    })
+      return item;
+    });
 
     let count = await OperatingSystems.find(searchObj).countDocuments();
     let totalPages = Math.ceil(count / pageSize);
@@ -248,25 +257,20 @@ async function getOperatingSystemChildren(req, res) {
           (x) => x.parentID == item._id
         );
         let data = {
-            _id: item._id,
-            operatingSystemName: item.operatingSystemName,
-            img: item.img,
-            file: item.file,
-            createdTime: item.createdTime,
-            children: dataChildren,
-        }
+          _id: item._id,
+          operatingSystemName: item.operatingSystemName,
+          img: item.img,
+          file: item.file,
+          createdTime: item.createdTime,
+          children: dataChildren,
+        };
         resData.push(data);
       }
     });
 
     let count = await OperatingSystems.find(searchObj).countDocuments();
     let totalPages = Math.ceil(count / pageSize);
-    let pagedModel = new PagedModel(
-      pageIndex,
-      pageSize,
-      totalPages,
-      resData
-    );
+    let pagedModel = new PagedModel(pageIndex, pageSize, totalPages, resData);
     res.json(pagedModel);
   } catch (error) {
     let response = new ResponseModel(404, error.message, error);

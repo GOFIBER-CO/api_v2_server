@@ -168,7 +168,7 @@ async function getSnapshotByUserId(req, res) {
         searchObj.user = req.query.userId;
     }
     if (req.query.cloudServerId) {
-        searchObj.cloudServers = req.query.cloudServerId;
+        searchObj.cloudServer = req.query.cloudServerId;
     }
     try {
         let snapshot = await Snapshots.find(searchObj)

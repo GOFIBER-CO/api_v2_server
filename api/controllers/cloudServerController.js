@@ -1071,7 +1071,30 @@ async function notifyCloudServerAboutToExpire() {
     console.log(error);
   }
 }
-
+async function updateNameCloudById(req, res) {
+  console.log(`req.body`, req.body, req.params);
+  try {
+    let newCloudServer = { updatedTime: Date.now(), ...req.body };
+    let updatedCloudServer = await CloudServers.findOneAndUpdate(
+      { _id: req.params.id },
+      newCloudServer
+    );
+    if (!updatedCloudServer) {
+      let response = new ResponseModel(0, "No item found!", null);
+      res.json(response);
+    } else {
+      let response = new ResponseModel(
+        1,
+        "Update cloud server success!",
+        newCloudServer
+      );
+      res.json(response);
+    }
+  } catch (error) {
+    let response = new ResponseModel(404, error.message, error);
+    res.status(404).json(response);
+  }
+}
 exports.notifyCloudServerAboutToExpire = notifyCloudServerAboutToExpire;
 exports.autoRenewCloudServer = autoRenewCloudServer;
 exports.insertCloudServer = insertCloudServer;
@@ -1088,3 +1111,4 @@ exports.switchAutoRenewServer = switchAutoRenewServer;
 exports.softDeleteCloudServer = softDeleteCloudServer;
 exports.getDeletedCloudServerByUser = getDeletedCloudServerByUser;
 exports.getAboutToExpireCloudServer = getAboutToExpireCloudServer;
+exports.updateNameCloudById = updateNameCloudById;
