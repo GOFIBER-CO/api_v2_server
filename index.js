@@ -46,6 +46,7 @@ const {
   autoRenewCloudServer,
   notifyCloudServerAboutToExpire,
 } = require("./api/controllers/cloudServerController");
+const webSupportRouter = require("./api/routes/webSupportRoute")
 
 //import routes
 app.use("/api/user", userRoute);
@@ -68,6 +69,7 @@ app.use("/api/statistic", statisticRouter);
 app.use("/api/order", orderRouter);
 app.use("/api/snapshot", snapshotRoute);
 app.use("/api/vmConfig", vmConfigRoute);
+app.use("/api/webSupport", webSupportRouter);
 
 const server = require("http").Server(app);
 const io = require("socket.io")(server, {
