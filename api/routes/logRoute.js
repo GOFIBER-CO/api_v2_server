@@ -3,7 +3,7 @@ const router = express.Router();
 const logController = require('../controllers/logController');
 const middlewares = require('./middlewares');
 
-router.post('/insert', middlewares.authentication, logController.insertLog);
+router.post('/insert', middlewares.authentication,logController.insertLog);
 router.put('/update/:id', middlewares.authentication, logController.updateLog);
 router.delete('/delete/:id', middlewares.authentication, logController.deleteLog);
 router.post('/getById', middlewares.authentication, logController.getLogById);
