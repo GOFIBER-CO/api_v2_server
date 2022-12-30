@@ -108,7 +108,6 @@ async function getAboutToExpireCloudServer(req, res) {
 }
 
 async function insertCloudServer(req, res) {
-  console.log(req.body);
   try {
     var dataNow = new Date();
     req.body.code = generateRandomString();
@@ -192,13 +191,14 @@ async function insertCloudServer(req, res) {
       res.json(response);
     }
     //tạo hóa đơn
+    const totalPrice = req.body.autoBackup ? server.price + server.price * 0.1 : server.price
     const order = await Order.create({
       code: generateRandomString(),
       user: req.body.user,
       product: server._id,
       totalPrice: server.discount
-        ? (server.price * server.discount) / 100
-        : server.price,
+        ? (totalPrice * server.discount) / 100
+        : totalPrice,
     });
 
     cloudServer.order = order._id;
