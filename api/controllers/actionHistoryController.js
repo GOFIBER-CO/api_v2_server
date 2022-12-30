@@ -32,9 +32,27 @@ class ActionHistroyController {
         try {
             const pageSize = req.query.pageSize || 10
             const pageIndex = req.query.pageIndex || 1
+            let searchObj = {}
+            const action = await ActionHistoryModel.find(searchObj).skip((pageSize * pageIndex) - pageSize).limit(pageSize).populate('user')
+            .skip(pageSize * pageIndex - pageSize)
+            .limit(parseInt(pageSize))
+            .sort({
+                createdTime: "desc",
+            });
+            let returnResult = []
+            if(req.query.filter){
+                action.map(item => {
+                    if(item.action.includes(req.query.filter)){
+                        returnResult.push(item)
+                    }
+                })
+            }else{
+                returnResult = action
+            }
+            await ActionHistoryModel.find({}).countDocuments();
+            return res.status(200).json({actions: returnResult,pageSize: pageSize, pageIndex: pageIndex})
 
-            const action = await ActionHistoryModel.find({}).skip((pageSize * pageIndex) - pageSize).limit(pageSize).populate('user').sort({createdAt: 'desc'})
-            return res.status(200).json({actions: action})
+            
         } catch (error) {
             console.log(error)
             return res.status(500).json({message: error})
