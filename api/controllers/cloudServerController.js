@@ -102,6 +102,7 @@ async function getAboutToExpireCloudServer(req, res) {
 
 async function insertCloudServer(req, res) {
   console.log(req.body);
+  // return;
   try {
     var dataNow = new Date();
     req.body.code = generateRandomString();
@@ -1109,7 +1110,44 @@ async function getCloudServersById(req, res) {
   res.status(200).json(response);
 }
 async function updateDataOfServerInCloudServerById(req, res) {
-  console.log(`hahahah`, req.body, req.params);
+  const { id } = req.params;
+  const { price } = req.body;
+  // console.log('server000: ', req.body);
+
+  // console.log("idServer: ", idServer);
+  // return;
+  try {
+    const result = await CloudServers.findByIdAndUpdate(id, {
+      server: req.body?._id,
+    });
+    console.log("result: ", result);
+    if (result) {
+      const updateOrderById = await Order.findByIdAndUpdate(result?.order, {
+        product: result?.server,
+        totalPrice: price,
+        updatedAt: Date.now(),
+      });
+      console.log("updateOrderById: ", updateOrderById);
+      let response = new ResponseModel(1, "Upgrade success!", result);
+      res.status(200).json(response);
+    }
+    // console.log("result: ", result);
+  } catch (error) {
+    let response = new ResponseModel(404, error.message, error);
+    res.status(404).json(response);
+  }
+
+  // console.log(`hahahah`, req.body._id);
+  // const order = await Order.create({
+  //   code: generateRandomString(),
+  //   user: req.body.user,
+  //   product: server._id,
+  //   totalPrice: server.discount
+  //     ? (server.price * server.discount) / 100
+  //     : server.price,
+  // });
+
+  // cloudServer.order = order._id;
 }
 exports.notifyCloudServerAboutToExpire = notifyCloudServerAboutToExpire;
 exports.autoRenewCloudServer = autoRenewCloudServer;
@@ -1130,4 +1168,5 @@ exports.getAboutToExpireCloudServer = getAboutToExpireCloudServer;
 exports.updateNameCloudById = updateNameCloudById;
 //
 exports.getCloudServersById = getCloudServersById;
-exports.updateDataOfServerInCloudServerById = updateDataOfServerInCloudServerById;
+exports.updateDataOfServerInCloudServerById =
+  updateDataOfServerInCloudServerById;
