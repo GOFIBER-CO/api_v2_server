@@ -1,6 +1,6 @@
 const PagedModel = require("../models/PagedModel");
 const ResponseModel = require("../models/ResponseModel");
-const VMConfig = require("../../database/entities/VmConfig");
+const VMConfig = require("../../database/entities/VMConfig");
 
 async function insertVmConfig(req, res) {
   try {

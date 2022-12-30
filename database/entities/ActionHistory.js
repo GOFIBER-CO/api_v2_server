@@ -8,11 +8,14 @@ const ActionHistory = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Users",
   },
-  createdAt: {
+  status: {
     type: String,
   },
+  createdAt: {
+    type: Date,
+  },
   successAt: {
-    type: String,
+    type: Date,
   },
 });
 

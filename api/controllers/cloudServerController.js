@@ -12,13 +12,16 @@ const Logs = require("../../database/entities/Logs");
 const schedule = require("node-schedule");
 const expiryDateTypeToNumber = require("../../helpers/expiryDateTypeToNumber");
 const { createNotification } = require("./notificationController");
+const { setActionStatus } = require("../routes/actionMiddleWare");
 
 async function switchAutoRenewServer(req, res) {
   try {
     const id = req.params.id;
+    const thisServer = await CloudServers.findById(id)
     const result = await CloudServers.findByIdAndUpdate(id, {
       isAutoRenew: req.body.isAutoRenew,
     });
+    await setActionStatus(req.actionId, req.body.isAutoRenew? `Bật tự động gia hạn cho cloud server ${thisServer.code}` : `Tắt tự động gia hạn cho cloud server ${thisServer.code}`, 'success')
     return res.status(200).json({
       message: req.body.isAutoRenew
         ? "Cloud server sẽ tự gia hạn"
@@ -26,19 +29,23 @@ async function switchAutoRenewServer(req, res) {
     });
   } catch (error) {
     console.log(error);
+    await setActionStatus(req.actionId, req.body.isAutoRenew? `Bật tự động gia hạn cho cloud server ${thisServer.code}` : `Tắt tự động gia hạn cho cloud server ${thisServer.code}`, 'fail')
     return res.status(500).json({ message: error });
   }
 }
 
 async function softDeleteCloudServer(req, res) {
   try {
+    const thisServer = await CloudServers.findById(req.params.id)
     const result = await CloudServers.findByIdAndUpdate(req.params?.id, {
       isDeleted: true,
       deletedAt: new Date(),
     });
+    await setActionStatus(req.actionId, `Xoá cloud server ${thisServer.code}`, 'success')
     return res.status(200).json({ message: "Huỷ cloud server thành công" });
   } catch (error) {
     console.log(error);
+    await setActionStatus(req.actionId, `Xoá cloud server`, 'fail')
     return res.status(500).json({ message: error });
   }
 }
@@ -101,7 +108,7 @@ async function getAboutToExpireCloudServer(req, res) {
 }
 
 async function insertCloudServer(req, res) {
-  console.log(req.body);
+  // console.log(req.body);
   // return;
   try {
     var dataNow = new Date();
@@ -111,6 +118,7 @@ async function insertCloudServer(req, res) {
     //tính ngày hết hạn
     let server = await Servers.findById(cloudServer.server);
     if (!server) {
+      await setActionStatus(req.actionId, `Tạo cloud server`, 'fail')
       let response = new ResponseModel(0, "Server not found!", null);
       return res.json(response);
     }
@@ -140,6 +148,7 @@ async function insertCloudServer(req, res) {
     let total;
     let user = await Users.findOne({ _id: req.body.user });
     if (!user) {
+      await setActionStatus(req.actionId, `Tạo cloud server`, 'fail')
       let response = new ResponseModel(0, "User not found!", null);
       return res.json(response);
     }
@@ -149,6 +158,7 @@ async function insertCloudServer(req, res) {
       total = user.surplus - server.price;
     }
     if (total < 0) {
+      await setActionStatus(req.actionId, `Tạo cloud server`, 'fail')
       let response = new ResponseModel(
         0,
         "Tài khoản không đủ vui lòng quý khách nạp tiền vào tài khoản!",
@@ -161,6 +171,7 @@ async function insertCloudServer(req, res) {
       user: req.body.user,
     }).sort({ createdTime: "desc" });
     if (!transactionHistory) {
+      await setActionStatus(req.actionId, `Tạo cloud server`, 'fail')
       let response = new ResponseModel(
         0,
         "Tài khoản chưa được nạp tiền!",
@@ -177,17 +188,19 @@ async function insertCloudServer(req, res) {
       newUser
     );
     if (!updatedUser) {
+      await setActionStatus(req.actionId, `Tạo cloud server`, 'fail')
       let response = new ResponseModel(0, "user No found!", null);
       res.json(response);
     }
     //tạo hóa đơn
+    const totalPrice = req.body.autoBackup ? server.price + server.price * 0.1 : server.price
     const order = await Order.create({
       code: generateRandomString(),
       user: req.body.user,
       product: server._id,
       totalPrice: server.discount
-        ? (server.price * server.discount) / 100
-        : server.price,
+        ? (totalPrice * server.discount) / 100
+        : totalPrice,
     });
 
     cloudServer.order = order._id;
@@ -195,8 +208,10 @@ async function insertCloudServer(req, res) {
     cloudServer.save(async function (err, newCloudServer) {
       if (err) {
         let response = new ResponseModel(-1, err.message, err);
+        await setActionStatus(req.actionId, `Tạo cloud server`, 'fail')
         res.json(response);
       } else {
+        await setActionStatus(req.actionId, `Tạo cloud server ${newCloudServer.code}`, 'success')
         let response = new ResponseModel(
           1,
           "Create cloud server success!",
@@ -262,9 +277,11 @@ async function updateCloudServer(req, res) {
       newCloudServer
     );
     if (!updatedCloudServer) {
+      await setActionStatus(req.actionId, `Cập nhật cloud server`, 'fail')
       let response = new ResponseModel(0, "No item found!", null);
       res.json(response);
     } else {
+      await setActionStatus(req.actionId, `Cập nhật cloud server ${updatedCloudServer.code}`, 'success')
       let response = new ResponseModel(
         1,
         "Update cloud server success!",
@@ -273,6 +290,7 @@ async function updateCloudServer(req, res) {
       res.json(response);
     }
   } catch (error) {
+    await setActionStatus(req.actionId, `Cập nhật cloud server`, 'fail')
     let response = new ResponseModel(404, error.message, error);
     res.status(404).json(response);
   }
@@ -282,13 +300,16 @@ async function deleteCloudServer(req, res) {
   // if (isValidObjectId(req.params.id)) {
   if (req.params.id) {
     try {
+      const thisCloudServer = await CloudServers.findById(req.parms.id)
       let cloudServer = await CloudServers.findByIdAndUpdate(req.params.id, {
         isDeleted: true,
       });
       if (!cloudServer) {
+        await setActionStatus(req.actionId, `Xoá cloud server ${thisCloudServer.code}`, 'fail')
         let response = new ResponseModel(0, "No item found!", null);
         res.json(response);
       } else {
+        await setActionStatus(req.actionId, `Xoá cloud server ${thisCloudServer.code}`, 'success')
         let response = new ResponseModel(
           1,
           "Delete cloud server success!",
@@ -297,10 +318,12 @@ async function deleteCloudServer(req, res) {
         res.json(response);
       }
     } catch (error) {
+      await setActionStatus(req.actionId, `Xoá cloud server`, 'fail')
       let response = new ResponseModel(404, error.message, error);
       res.status(404).json(response);
     }
   } else {
+    await setActionStatus(req.actionId, `Xoá cloud server`, 'fail')
     res
       .status(404)
       .json(new ResponseModel(404, "cloudServerId is not valid!", null));
@@ -1082,9 +1105,11 @@ async function updateNameCloudById(req, res) {
       newCloudServer
     );
     if (!updatedCloudServer) {
+      await setActionStatus(req.actionId, `Thay đổi tên cloud server ${req.body.code}`, 'fail')
       let response = new ResponseModel(0, "No item found!", null);
       res.json(response);
     } else {
+      await setActionStatus(req.actionId, `Thay đổi tên cloud server ${req.body.code}`, 'success')
       let response = new ResponseModel(
         1,
         "Update cloud server success!",
@@ -1093,6 +1118,7 @@ async function updateNameCloudById(req, res) {
       res.json(response);
     }
   } catch (error) {
+    await setActionStatus(req.actionId, `Thay đổi tên cloud server ${req.body.code}`, 'fail')
     let response = new ResponseModel(404, error.message, error);
     res.status(404).json(response);
   }

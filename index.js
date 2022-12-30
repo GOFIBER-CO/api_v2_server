@@ -13,7 +13,6 @@ app.use(
     origin: origin,
   })
 );
-app.options("*", cors());
 app.use(fileUpload());
 app.use(express.static("public"));
 app.use(bodyParser.json({ limit: "50mb" }));
@@ -41,6 +40,7 @@ const statisticRouter = require("./api/routes/statisticRoute");
 const socket = require("./api/socket");
 const snapshotRoute = require("./api/routes/snapshotRoute");
 const vmConfigRoute = require("./api/routes/vmConfigRoute");
+const actionHistoryRouter = require("./api/routes/actionHistoryRouter");
 const {
   autoRenewCloudServer,
   notifyCloudServerAboutToExpire,
@@ -68,11 +68,14 @@ app.use("/api/statistic", statisticRouter);
 app.use("/api/order", orderRouter);
 app.use("/api/snapshot", snapshotRoute);
 app.use("/api/vmConfig", vmConfigRoute);
+app.use("/api/action-history", actionHistoryRouter)
 app.use("/api/webSupport", webSupportRouter);
 
 const server = require("http").Server(app);
 const io = require("socket.io")(server, {
-  cors: "*",
+  cors: {
+    origin: origin
+  },
 });
 
 autoRenewCloudServer();
