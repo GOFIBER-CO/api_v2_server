@@ -17,7 +17,7 @@ class ActionHistroyController {
             const pageIndex = req.query.pageIndex || 1
             const action = await ActionHistoryModel.find({
                 user: req.params.userId
-            }).skip((pageSize * pageIndex) - pageSize).limit(pageSize).populate('user')
+            }).skip((pageSize * pageIndex) - pageSize).limit(pageSize).populate('user').sort({createdAt: 'desc'})
             const count = await ActionHistoryModel.find({
                 user: req.params.userId
             }).countDocuments()
@@ -33,7 +33,7 @@ class ActionHistroyController {
             const pageSize = req.query.pageSize || 10
             const pageIndex = req.query.pageIndex || 1
 
-            const action = await ActionHistoryModel.find({}).skip((pageSize * pageIndex) - pageSize).limit(pageSize).populate('user')
+            const action = await ActionHistoryModel.find({}).skip((pageSize * pageIndex) - pageSize).limit(pageSize).populate('user').sort({createdAt: 'desc'})
             return res.status(200).json({actions: action})
         } catch (error) {
             console.log(error)

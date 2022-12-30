@@ -3,6 +3,7 @@ const ResponseModel = require("../models/ResponseModel");
 const Notification = require("../../database/entities/Notification");
 const randomString = require('../../helpers/generateRandomString');
 const socketService = require("./socketService");
+const { setActionStatus } = require("../routes/actionMiddleWare");
 
 async function createNotification(reciever, name, type, content, status = true){
   const code = randomString(10)
@@ -32,9 +33,10 @@ async function insertNotification(req, res) {
       let noti = new Notification(req.body);
       noti.createdTime = Date.now();
 
-      noti.save(function (err, newNoti) {
+      noti.save(async function (err, newNoti) {
         if (err) {
           let response = new ResponseModel(-1, err.message, err);
+          await setActionStatus(req.actionId, `Tạo thông báo thất bại`, 'fail')
           res.json(response);
         } else {
           let response = new ResponseModel(
@@ -42,6 +44,7 @@ async function insertNotification(req, res) {
             "Tạo thông báo thành công",
             newNoti
           );
+          await setActionStatus(req.actionId, `Tạo thông báo ${newNoti.code}`, 'success')
           if(req.body.status){
             const onlineUser = socketService.getOnlineUser()
             onlineUser.map((item)=>{
@@ -55,6 +58,7 @@ async function insertNotification(req, res) {
       });
     } catch (error) {
       let response = new ResponseModel(404, error.message, error);
+      await setActionStatus(req.actionId, `Tạo thông báo`, 'fail')
       res.status(404).json(response);
     }
   // } else {
@@ -72,13 +76,16 @@ async function updateNotification(req, res) {
       );
       if (!updatedNoti) {
         let response = new ResponseModel(0, "No item found!", null);
+        await setActionStatus(req.actionId, `Cập nhật thông báo`, 'fail')
         res.json(response);
       } else {
         let response = new ResponseModel(1, "Update Notification success!", newNoti);
+        await setActionStatus(req.actionId, `Cập nhật thông báo ${updatedNoti.code}`, 'success')
         res.json(response);
       }
     } catch (error) {
       let response = new ResponseModel(404, error.message, error);
+      await setActionStatus(req.actionId, `Cập nhật thông báo`, 'fail')
       res.status(404).json(response);
     }
   } else {
@@ -91,12 +98,15 @@ async function deleteNotification(req, res) {
   // if (isValidObjectId(req.params.id)) {
     if (req.params.id) {
       try {
+        const thisNoti = await Notification.findById(req.params.id)
         let noti = await Notification.findByIdAndDelete(req.params.id);
         if (!noti) {
           let response = new ResponseModel(0, "No item found!", null);
+          await setActionStatus(req.actionId, `Xoá thông báo ${thisNoti.code}`, 'fail')
           res.json(response);
         } else {
           let response = new ResponseModel(1, "Delete notification success!", null);
+          await setActionStatus(req.actionId, `Xoá thông báo ${thisNoti.code}`, 'success')
           res.json(response);
         }
       } catch (error) {
@@ -104,11 +114,13 @@ async function deleteNotification(req, res) {
         res.status(404).json(response);
       }
     } else {
+      await setActionStatus(req.actionId, `Xoá thông báo`, 'fail')
       res
         .status(404)
         .json(new ResponseModel(404, "NotificationId is not valid!", null));
     }
   } else {
+    await setActionStatus(req.actionId, `Xoá thông báo`, 'fail')
     res.sendStatus(403);
   }
 }

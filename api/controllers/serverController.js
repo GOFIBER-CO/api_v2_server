@@ -2,6 +2,7 @@ const PagedModel = require("../models/PagedModel");
 const ResponseModel = require("../models/ResponseModel");
 const Servers = require("../../database/entities/Servers");
 const generateRandomString = require("../../helpers/generateRandomString");
+const { setActionStatus } = require("../routes/actionMiddleWare");
 
 async function insertServer(req, res) {
     try {
@@ -9,11 +10,13 @@ async function insertServer(req, res) {
       let server = new Servers(req.body);
       server.createdTime = Date.now();
 
-      await server.save(function (err, newServer) {
+      await server.save(async function (err, newServer) {
         if (err) {
           let response = new ResponseModel(-1, err.message, err);
+          await setActionStatus(req.actionId, `Tạo server mới`, 'fail')
           res.json(response);
         } else {
+          await setActionStatus(req.actionId, `Tạo server ${newServer.code} thành công`, 'success')
           let response = new ResponseModel(
             1,
             "Create server success!",
@@ -23,6 +26,7 @@ async function insertServer(req, res) {
         }
       });
     } catch (error) {
+      await setActionStatus(req.actionId, `Tạo server mới`, 'fail')
       let response = new ResponseModel(404, error.message, error);
       res.status(404).json(response);
     }
@@ -37,13 +41,16 @@ async function updateServer(req, res) {
         newServer
       );
       if (!updatedServer) {
+        await setActionStatus(req.actionId, `Cập nhật server`, 'fail')
         let response = new ResponseModel(0, "No item found!", null);
         res.json(response);
       } else {
+        await setActionStatus(req.actionId, `Cập nhật server ${updatedServer.code}`, 'success')
         let response = new ResponseModel(1, "Update server success!", newServer);
         res.json(response);
       }
     } catch (error) {
+      await setActionStatus(req.actionId, `Cập nhật server`, 'fail')
       let response = new ResponseModel(404, error.message, error);
       res.status(404).json(response);
     }
@@ -56,15 +63,19 @@ async function deleteServer(req, res) {
   // if (isValidObjectId(req.params.id)) {
     if (req.params.id) {
       try {
+        const thisServer = await Servers.findById(req.params.id)
         let server = await Servers.findByIdAndDelete(req.params.id);
         if (!server) {
+          await setActionStatus(req.actionId, `Xoá server ${thisServer.code}`, 'fail')
           let response = new ResponseModel(0, "No item found!", null);
           res.json(response);
         } else {
+          await setActionStatus(req.actionId, `Xoá server ${thisServer.code}`, 'success')
           let response = new ResponseModel(1, "Delete server success!", null);
           res.json(response);
         }
       } catch (error) {
+        await setActionStatus(req.actionId, `Xoá server`, 'fail')
         let response = new ResponseModel(404, error.message, error);
         res.status(404).json(response);
       }

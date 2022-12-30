@@ -3,9 +3,10 @@ const ResponseModel = require("../models/ResponseModel");
 const OperatingSystems = require("../../database/entities/OperatingSystems");
 const path = require("path");
 const generateRandomString = require("../../helpers/generateRandomString");
+const { setActionStatus } = require("../routes/actionMiddleWare");
 
 async function insertOperatingSystem(req, res) {
-  if (req.actions.includes("insertOperatingSystem")) {
+  // if (req.actions.includes("insertOperatingSystem")) {
     try {
       if (req.files?.file) {
         const file = req.files.file;
@@ -24,29 +25,35 @@ async function insertOperatingSystem(req, res) {
       });
       operatingSystem.createdTime = Date.now();
 
-      operatingSystem.save(function (err, newOperatingSystem) {
+      operatingSystem.save(async function (err, newOperatingSystem) {
         if (err) {
+          console.log(err)
           let response = new ResponseModel(-1, err.message, err);
-          res.json(response);
+          await setActionStatus(req.actionId, `Tạo hệ điều hành`, 'fail')
+          return res.status(201).json(response);
         } else {
           let response = new ResponseModel(
             1,
             "Create operating system success!",
             newOperatingSystem
           );
+          await setActionStatus(req.actionId, `Tạo hệ điều hành ${newOperatingSystem.code}`, 'success')
           res.json(response);
         }
       });
     } catch (error) {
+      console.log(error)
+      await setActionStatus(req.actionId, `Tạo hệ điều hành`, 'fail')
       let response = new ResponseModel(404, error.message, error);
-      res.status(404).json(response);
+      res.json(response)
     }
-  } else {
-    return res.status(403);
-  }
+  // } else {
+  //   await setActionStatus(req.actionId, `Tạo hệ điều hành`, 'fail')
+  //   return res.status(403);
+  // }
 }
 async function updateOperatingSystem(req, res) {
-  if (req.actions.includes("updateOperatingSystem")) {
+  // if (req.actions.includes("updateOperatingSystem")) {
     try {
       if (req.files?.file) {
         const file = req.files?.file;
@@ -67,9 +74,11 @@ async function updateOperatingSystem(req, res) {
         newOperatingSystem
       );
       if (!updatedOperatingSystem) {
+        await setActionStatus(req.actionId, `Cập nhật hệ điều hành ${updatedOperatingSystem.code}`, 'fail')
         let response = new ResponseModel(0, "No item found!", null);
         res.json(response);
       } else {
+        await setActionStatus(req.actionId, `Cập nhật hệ điều hành ${updatedOperatingSystem.code}`, 'success')
         let response = new ResponseModel(
           1,
           "Update operating system success!",
@@ -79,12 +88,14 @@ async function updateOperatingSystem(req, res) {
       }
     } catch (error) {
       console.log(error);
+      await setActionStatus(req.actionId, `Cập nhật hệ điều hành`, 'fail')
       let response = new ResponseModel(404, error.message, error);
       res.status(404).json(response);
     }
-  } else {
-    return res.status(403);
-  }
+  // } else {
+  //   await setActionStatus(req.actionId, `Cập nhật hệ điều hành ${req.body.code}`, 'fail')
+  //   return res.status(403);
+  // }
 }
 
 async function deleteOperatingSystem(req, res) {
@@ -92,13 +103,16 @@ async function deleteOperatingSystem(req, res) {
   if (req.actions.includes("deleteOperatingSystem")) {
     if (req.params.id) {
       try {
+        const thisOperatingSystem = await OperatingSystems.findById(req.params.id)
         let operatingSystem = await OperatingSystems.findByIdAndDelete(
           req.params.id
         );
         if (!operatingSystem) {
+          await setActionStatus(req.actionId, `Xoá hệ điều hành ${thisOperatingSystem.code}`, 'fail')
           let response = new ResponseModel(0, "No item found!", null);
           res.json(response);
         } else {
+          await setActionStatus(req.actionId, `Xoá hệ điều hành ${thisOperatingSystem.code}`, 'success')
           let response = new ResponseModel(
             1,
             "Delete operating system success!",
@@ -107,15 +121,18 @@ async function deleteOperatingSystem(req, res) {
           res.json(response);
         }
       } catch (error) {
+        await setActionStatus(req.actionId, `Xoá hệ điều hành`, 'fail')
         let response = new ResponseModel(404, error.message, error);
         res.status(404).json(response);
       }
     } else {
+      await setActionStatus(req.actionId, `Xoá hệ điều hành`, 'fail')
       res
         .status(404)
         .json(new ResponseModel(404, "OperatingSystemId is not valid!", null));
     }
   } else {
+    await setActionStatus(req.actionId, `Xoá hệ điều hành`, 'fail')
     res.sendStatus(403);
   }
 }

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const snapshotController = require('../controllers/snapshotController');
-const createAction = require('./actionMiddleWare');
+const {createAction} = require('./actionMiddleWare');
 const middlewares = require('./middlewares');
 
 router.post('/insert', middlewares.authentication, createAction("Tạo snapshot"),snapshotController.createSnapshot);

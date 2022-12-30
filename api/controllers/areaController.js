@@ -3,6 +3,7 @@ const ResponseModel = require("../models/ResponseModel");
 const Areas = require("../../database/entities/Areas");
 const path = require('path')
 const generateRandomString = require("../../helpers/generateRandomString");
+const { setActionStatus } = require("../routes/actionMiddleWare");
 
 async function insertArea(req, res) {
   if (req.actions.includes("insertArea")) {
@@ -16,25 +17,29 @@ async function insertArea(req, res) {
       req.body.code = generateRandomString()
       let area = new Areas({file: `${process.env.URL}/UploadFiles/${req.files?.file?.name}`, ...req.body});
       area.createdTime = Date.now();
-      area.save(function (err, newArea) {
+      area.save(async function (err, newArea) {
         if (err) {
           let response = new ResponseModel(-1, err.message, err);
-          res.json(response);
+          await setActionStatus(req.actionId, `Tạo khu vực thất bại`, 'fail')
+          return res.json(response);
         } else {
           let response = new ResponseModel(
             1,
             "Create area success!",
             newArea
           );
-          res.json(response);
+          await setActionStatus(req.actionId, `Tạo thành công khu vực ${newArea.code}`, 'success')
+          return res.json(response);
         }
       });
     } catch (error) {
       let response = new ResponseModel(404, error.message, error);
-      res.status(404).json(response);
+      await setActionStatus(req.actionId, `Tạo khu vực thất bại`, 'fail')
+      return res.status(404).json(response);
     }
   } else {
-    res.sendStatus(403);
+    await setActionStatus(req.actionId, `Tạo khu vực thất bại`, 'fail')
+    return res.sendStatus(403);
   }
 }
 
@@ -54,17 +59,21 @@ async function updateArea(req, res) {
       );
       if (!updatedArea) {
         let response = new ResponseModel(0, "No item found!", null);
+        await setActionStatus(req.actionId, `Cập nhật khu vực ${updatedArea.code} thất bại`, 'fail')
         res.json(response);
       } else {
         let response = new ResponseModel(1, "Update area success!", newArea);
+        await setActionStatus(req.actionId, `Cập nhật khu vực ${updatedArea.code} thành công`, 'success')
         res.json(response);
       }
     } catch (error) {
       console.log(error)
       let response = new ResponseModel(404, error.message, error);
+      await setActionStatus(req.actionId, `Cập nhật khu vực`, 'fail')
       res.status(404).json(response);
     }
   } else {
+    await setActionStatus(req.actionId, `Cập nhật khu vực ${req.body.code} thất bại`, 'fail')
     res.sendStatus(403);
   }
 }
@@ -74,12 +83,15 @@ async function deleteArea(req, res) {
   if (req.actions.includes("deleteArea")) {
     if (req.params.id) {
       try {
+        const thisArea = await Areas.findById(req.params.id)
         let area = await Areas.findByIdAndDelete(req.params.id);
         if (!area) {
           let response = new ResponseModel(0, "No item found!", null);
+          await setActionStatus(req.actionId, `Xoá khu vực ${thisArea.code} thất bại`, 'fail')
           res.json(response);
         } else {
           let response = new ResponseModel(1, "Delete area success!", null);
+          await setActionStatus(req.actionId, `Xoá khu vực ${thisArea.code} thành công`, 'success')
           res.json(response);
         }
       } catch (error) {
@@ -87,6 +99,7 @@ async function deleteArea(req, res) {
         res.status(404).json(response);
       }
     } else {
+      await setActionStatus(req.actionId, `Xoá khu vực ${thisArea.code} thất bại`, 'fail')
       res
         .status(404)
         .json(new ResponseModel(404, "AreaId is not valid!", null));

@@ -4,6 +4,7 @@ const ResponseModel = require("../models/ResponseModel");
 const Snapshots = require("../../database/entities/Snapshots");
 const generateRandomString = require("../../helpers/generateRandomString");
 const Logs = require("../../database/entities/Logs");
+const { setActionStatus } = require("../routes/actionMiddleWare");
 
 async function createSnapshot(req, res) {
   try {
@@ -13,6 +14,7 @@ async function createSnapshot(req, res) {
 
     snapshot.save(async function (err, newSnapshot) {
       if (err) {
+        await setActionStatus(req.actionId, `Tạo snapshot`, 'fail')
         let response = new ResponseModel(-1, err.message, err);
         res.json(response);
       } else {
@@ -28,16 +30,21 @@ async function createSnapshot(req, res) {
         });
         await newLog.save(async function (err, newLog) {
           if (err) {
+            await setActionStatus(req.actionId, `Tạo snapshot`, 'fail')
             let response = new ResponseModel(-1, err.message, err);
-            res.json(response);
+            return res.json(response);
+          }else{
+           
           }
         })
-
+        await setActionStatus(req.actionId, `Tạo snapshot ${newSnapshot.code}`, 'success')
         let response = new ResponseModel(1, "Create snapshot success!", newSnapshot);
-        res.json(response);
+        return res.json(response);
+    
       }
     });
   } catch (error) {
+    await setActionStatus(req.actionId, `Tạo snapshot`, 'fail')
     let response = new ResponseModel(404, error.message, error);
     res.status(404).json(response);
   }
@@ -51,6 +58,7 @@ async function updateSnapshot(req, res) {
       newSnapshot
     );
     if (!updatedSnapshot) {
+      await setActionStatus(req.actionId, `Cập nhật snapshot`, 'fail')
       let response = new ResponseModel(0, "No item found!", null);
       res.json(response);
     } else {
@@ -64,6 +72,7 @@ async function updateSnapshot(req, res) {
         status: 1,
         completionTime:  Date.now(),
       });
+      await setActionStatus(req.actionId, `Cập nhật snapshot ${updatedSnapshot.code}`, 'success')
       await newLog.save(async function (err, newLog) {
         if (err) {
           let response = new ResponseModel(-1, err.message, err);
@@ -75,6 +84,7 @@ async function updateSnapshot(req, res) {
       res.json(response);
     }
   } catch (error) {
+    await setActionStatus(req.actionId, `Cập nhật snapshot`, 'fail')
     let response = new ResponseModel(404, error.message, error);
     res.status(404).json(response);
   }
@@ -83,8 +93,10 @@ async function updateSnapshot(req, res) {
 async function deleteSnapshot(req, res) {
   if (req.params.id) {
     try {
+      const thisSnapshot = await Snapshots.findById(req.params.id)
       let snapshot = await Snapshots.findByIdAndDelete(req.params.id);
       if (!snapshot) {
+        await setActionStatus(req.actionId, `Xoá snapshot ${thisSnapshot.code}`, 'fail')
         let response = new ResponseModel(0, "No item found!", null);
         res.json(response);
       } else {
@@ -104,14 +116,17 @@ async function deleteSnapshot(req, res) {
             res.json(response);
           }
         })
+        await setActionStatus(req.actionId, `Xoá snapshot ${thisSnapshot.code}`, 'success')
         let response = new ResponseModel(1, "Delete snapshot success!", null);
         res.json(response);
       }
     } catch (error) {
+      await setActionStatus(req.actionId, `Xoá snapshot`, 'fail')
       let response = new ResponseModel(404, error.message, error);
       res.status(404).json(response);
     }
   } else {
+    await setActionStatus(req.actionId, `Xoá snapshot`, 'fail')
     res.status(404).json(new ResponseModel(404, "SnapshotId is not valid!", null));
   }
 }
