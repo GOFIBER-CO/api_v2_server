@@ -19,5 +19,9 @@ router.delete('/deleteCloudServer/:id', middlewares.authentication, createAction
 router.get('/deletedCloud', middlewares.authentication, cloudServerController.getDeletedCloudServerByUser)
 router.get('/aboutToExpire', middlewares.authentication,cloudServerController.getAboutToExpireCloudServer)
 router.post('/renewCloudServer/:id', middlewares.authentication, cloudServerController.cloudServerExtend)
-router.put('/update/name/:id', middlewares.authentication, createAction('Update tên cloudserver'),cloudServerController.updateNameCloudById)
+router.put('/update/name/:id', cloudServerController.updateNameCloudById)
+//
+router.get('/getById/:id', cloudServerController.getCloudServersById)
+router.put('/server/update/:id', cloudServerController.updateDataOfServerInCloudServerById)
+
 module.exports = router;

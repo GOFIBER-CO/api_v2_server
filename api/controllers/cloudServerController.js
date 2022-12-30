@@ -1096,6 +1096,21 @@ async function updateNameCloudById(req, res) {
     res.status(404).json(response);
   }
 }
+//get by id
+async function getCloudServersById(req, res) {
+  const { id } = req.params;
+  const result = await CloudServers.findById(id)
+    .populate("area")
+    .populate("server")
+    .populate("operatingSystem")
+    .populate("order");
+  // console.log("result: ", result);
+  let response = new ResponseModel(200, `OKE`, result);
+  res.status(200).json(response);
+}
+async function updateDataOfServerInCloudServerById(req, res) {
+  console.log(`hahahah`, req.body, req.params);
+}
 exports.notifyCloudServerAboutToExpire = notifyCloudServerAboutToExpire;
 exports.autoRenewCloudServer = autoRenewCloudServer;
 exports.insertCloudServer = insertCloudServer;
@@ -1113,3 +1128,6 @@ exports.softDeleteCloudServer = softDeleteCloudServer;
 exports.getDeletedCloudServerByUser = getDeletedCloudServerByUser;
 exports.getAboutToExpireCloudServer = getAboutToExpireCloudServer;
 exports.updateNameCloudById = updateNameCloudById;
+//
+exports.getCloudServersById = getCloudServersById;
+exports.updateDataOfServerInCloudServerById = updateDataOfServerInCloudServerById;
