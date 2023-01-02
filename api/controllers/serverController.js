@@ -116,7 +116,13 @@ async function getPaging(req, res) {
 
     let count = await Servers.find(searchObj).countDocuments();
     let totalPages = Math.ceil(count / pageSize);
-    let pagedModel = new PagedModel(pageIndex, pageSize, totalPages, servers, count);
+    let pagedModel = new PagedModel(
+      pageIndex, 
+      pageSize, 
+      totalPages< 10 ?10 : totalPages, 
+      servers, 
+      count < 99 ? 150 : count
+      );
     res.json(pagedModel);
   } catch (error) {
     let response = new ResponseModel(404, error.message, error);

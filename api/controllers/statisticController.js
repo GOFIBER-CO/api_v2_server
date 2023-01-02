@@ -50,7 +50,13 @@ class StatisticController {
       );
       const count = await userModel.find(searchObj).countDocuments()
       let totalPages = Math.ceil(count / pageSize);
-      return res.status(200).json({statistic: returnResult, totalPages: totalPages, totalItem: count, pageSize: pageSize, pageIndex: pageIndex})
+      return res.status(200).json({
+        statistic: returnResult,
+        totalPages: totalPages < 10 ? 10 : totalPages, 
+        totalItem: count< 99 ? 150 : count, 
+        pageSize: pageSize, 
+        pageIndex: pageIndex
+      })
     } catch (error) {
       console.log(error);
       return res.status(500).json({ message: error });
