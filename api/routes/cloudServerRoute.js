@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const cloudServerController = require('../controllers/cloudServerController');
-const createAction = require('./actionMiddleWare');
+const {createAction} = require('./actionMiddleWare');
 const middlewares = require('./middlewares');
 
 router.post('/insert', middlewares.authentication, createAction('Tạo mới cloudserver'),cloudServerController.insertCloudServer);
@@ -19,9 +19,9 @@ router.delete('/deleteCloudServer/:id', middlewares.authentication, createAction
 router.get('/deletedCloud', middlewares.authentication, cloudServerController.getDeletedCloudServerByUser)
 router.get('/aboutToExpire', middlewares.authentication,cloudServerController.getAboutToExpireCloudServer)
 router.post('/renewCloudServer/:id', middlewares.authentication, cloudServerController.cloudServerExtend)
-router.put('/update/name/:id', cloudServerController.updateNameCloudById)
+router.put('/update/name/:id', middlewares.authentication,cloudServerController.updateNameCloudById)
 //
-router.get('/getById/:id', cloudServerController.getCloudServersById)
-router.put('/server/update/:id', cloudServerController.updateDataOfServerInCloudServerById)
+router.get('/getById/:id', middlewares.authentication,cloudServerController.getCloudServersById)
+router.put('/server/update/:id', middlewares.authentication, cloudServerController.updateDataOfServerInCloudServerById)
 
 module.exports = router;

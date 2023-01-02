@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const processingRoomController = require('../controllers/processingRoomController');
-const createAction = require('./actionMiddleWare');
+const {createAction} = require('./actionMiddleWare');
 const middlewares = require('./middlewares');
 
 router.post('/insert', middlewares.authorize, createAction('Tạo phòng ban mới'),processingRoomController.insertProcessingRoom);

@@ -12,10 +12,10 @@ const ActionHistory = mongoose.Schema({
     type: String,
   },
   createdAt: {
-    type: String,
+    type: Date,
   },
   successAt: {
-    type: String,
+    type: Date,
   },
 });
 

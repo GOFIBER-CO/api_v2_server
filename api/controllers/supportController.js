@@ -7,6 +7,7 @@ const generateRandomString = require("../../helpers/generateRandomString");
 const socketService = require("./socketService");
 const Notification = require("../../database/entities/Notification");
 const Users = require("../../database/entities/authentication/Users");
+const { setActionStatus } = require("../routes/actionMiddleWare");
 
 async function insertSupport(req, res) {
     try {
@@ -35,8 +36,10 @@ async function insertSupport(req, res) {
         }
         return 'Done'
       }))
+      await setActionStatus(req.actionId, `Tạo ticket ${result.code} thành công`, 'success')
       return res.status(200).json({message: 'Tạo ticket thành công'})
     } catch (error) {
+      await setActionStatus(req.actionId, `Tạo ticket`, 'fail')
       return res.status(500).json({message: error})
     }
 }
@@ -48,11 +51,12 @@ async function updateSupport(req, res) {
       { _id: req.params.id },
       newSupport
     );
-    console.log(updatedSupport)
     if (!updatedSupport) {
+      await setActionStatus(req.actionId, `Cập nhật ticket`, 'fail') 
       let response = new ResponseModel(0, "No item found!", null);
       res.json(response);
     } else {
+      await setActionStatus(req.actionId, `Cập nhật ticket ${updatedSupport.code}`, 'success') 
       let response = new ResponseModel(1, "Update support success!", newSupport);
       notiCode = randomString(10)
       let noti = new Notification({
@@ -76,6 +80,7 @@ async function updateSupport(req, res) {
       res.json(response);
     }
   } catch (error) {
+    await setActionStatus(req.actionId, `Cập nhật ticket`, 'fail') 
     let response = new ResponseModel(404, error.message, error);
     res.status(404).json(response);
   }
@@ -85,19 +90,24 @@ async function deleteSupport(req, res) {
   // if (isValidObjectId(req.params.id)) {
   if (req.params.id) {
     try {
+      const thisSupport = await Supports.findById(req.params.id)
       let support = await Supports.findByIdAndDelete(req.params.id);
       if (!support) {
+        await setActionStatus(req.actionId, `Xoá ticket ${thisSupport.code}`, 'fail') 
         let response = new ResponseModel(0, "No item found!", null);
         res.json(response);
       } else {
+        await setActionStatus(req.actionId, `Xoá ticket ${thisSupport.code}`, 'success') 
         let response = new ResponseModel(1, "Delete support success!", null);
         res.json(response);
       }
     } catch (error) {
+      await setActionStatus(req.actionId, `Xoá ticket`, 'fail') 
       let response = new ResponseModel(404, error.message, error);
       res.status(404).json(response);
     }
   } else {
+    await setActionStatus(req.actionId, `Xoá ticket`, 'fail') 
     res
       .status(404)
       .json(new ResponseModel(404, "SupportId is not valid!", null));

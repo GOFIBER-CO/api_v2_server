@@ -18,4 +18,17 @@ function createAction(actionName) {
   };
 }
 
-module.exports = createAction;
+async function setActionStatus(actionId, actionName, actionStatus){
+  try {
+    const result = await ActionModel.findByIdAndUpdate(actionId, {
+      action: actionName,
+      status: actionStatus,
+      successAt: new Date()
+    })
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+exports.createAction = createAction;
+exports.setActionStatus = setActionStatus

@@ -17,8 +17,7 @@ class ActionHistroyController {
             const pageIndex = req.query.pageIndex || 1
             const action = await ActionHistoryModel.find({
                 user: req.params.userId
-            }).skip((pageSize * pageIndex) - pageSize).limit(pageSize).populate('user')
-
+            }).skip((pageSize * pageIndex) - pageSize).limit(pageSize).populate('user').sort({createdAt: 'desc'})
             const count = await ActionHistoryModel.find({
                 user: req.params.userId
             }).countDocuments()
@@ -34,7 +33,7 @@ class ActionHistroyController {
             const pageSize = req.query.pageSize || 10
             const pageIndex = req.query.pageIndex || 1
             let searchObj = {}
-            const action = await ActionHistoryModel.find(searchObj).skip((pageSize * pageIndex) - pageSize).limit(pageSize).populate('user')
+            const action = await ActionHistoryModel.find(searchObj).skip(pageIndex).limit((pageSize * pageIndex) - pageSize).populate('user')
             .skip(pageSize * pageIndex - pageSize)
             .limit(parseInt(pageSize))
             .sort({
@@ -50,6 +49,7 @@ class ActionHistroyController {
             }else{
                 returnResult = action
             }
+
             let count =await ActionHistoryModel.find({}).countDocuments();
             let totalPages = Math.ceil(count / pageSize);
             return res.status(200).json({
@@ -59,6 +59,10 @@ class ActionHistroyController {
                 count : count< 99 ? 150 : count,
                 totalPages: totalPages < 10 ? 10 : totalPages
             })
+
+            // const count = await ActionHistoryModel.find({}).countDocuments();
+            // return res.status(200).json({actions: returnResult,pageSize: pageSize, pageIndex: pageIndex, totalDoc: count, totalPage: Math.ceil(count/pageSize)})
+
 
             
         } catch (error) {

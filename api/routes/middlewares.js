@@ -36,6 +36,7 @@ async function authentication(req, res, next) {
     try {
       const checkAuthentication = jwt.verify(token, secretKey);
       if (checkAuthentication) {
+        req.userId = checkAuthentication._id;
         next();
       } else {
         return res
