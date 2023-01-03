@@ -161,7 +161,13 @@ async function getPaging(req, res) {
 
     let count = req.query.search ? returnResult.length : await Supports.find(searchObj).countDocuments() 
     let totalPages = Math.ceil(count / pageSize);
-    let pagedModel = new PagedModel(pageIndex, pageSize, totalPages, returnResult, count);
+    let pagedModel = new PagedModel(
+      pageIndex, 
+      pageSize, 
+      totalPages< 10 ? 10 : totalPages, 
+      returnResult, 
+      count< 99 ? 150 : count
+      );
     res.json(pagedModel);
   } catch (error) {
     let response = new ResponseModel(404, error.message, error);
@@ -198,7 +204,13 @@ async function getSupportByUserId(req, res) {
 
     let count = await Supports.find(searchObj).countDocuments();
     let totalPages = Math.ceil(count / pageSize);
-    let pagedModel = new PagedModel(pageIndex, pageSize, totalPages, support, count);
+    let pagedModel = new PagedModel(
+      pageIndex, 
+      pageSize, 
+      totalPages< 10 ? 10 : totalPages, 
+      support, 
+      count < 99 ? 150 : count
+      );
     res.json(pagedModel);
   } catch (error) {
     let response = new ResponseModel(404, error.message, error);

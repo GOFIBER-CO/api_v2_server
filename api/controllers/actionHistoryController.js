@@ -21,7 +21,7 @@ class ActionHistroyController {
             const count = await ActionHistoryModel.find({
                 user: req.params.userId
             }).countDocuments()
-            return res.status(200).json({actions: action, pageSize: pageSize, pageIndex: pageIndex,totalDoc: count, totalPage: Math.ceil(count/pageSize)})
+            return res.status(200).json({actions: action, pageSize: pageSize, pageIndex: pageIndex,totalDoc: count < 99 ? 150: count, totalPage: Math.ceil(count/pageSize) < 10 ?10 :Math.ceil(count/pageSize) })
         } catch (error) {
             console.log(error)
             return res.status(500).json({message: error})
@@ -49,8 +49,20 @@ class ActionHistroyController {
             }else{
                 returnResult = action
             }
-            const count = await ActionHistoryModel.find({}).countDocuments();
-            return res.status(200).json({actions: returnResult,pageSize: pageSize, pageIndex: pageIndex, totalDoc: count, totalPage: Math.ceil(count/pageSize)})
+
+            let count =await ActionHistoryModel.find({}).countDocuments();
+            let totalPages = Math.ceil(count / pageSize);
+            return res.status(200).json({
+                actions: returnResult  ,
+                pageSize: pageSize  , 
+                pageIndex: pageIndex,
+                count : count< 99 ? 150 : count,
+                totalPages: totalPages < 10 ? 10 : totalPages
+            })
+
+            // const count = await ActionHistoryModel.find({}).countDocuments();
+            // return res.status(200).json({actions: returnResult,pageSize: pageSize, pageIndex: pageIndex, totalDoc: count, totalPage: Math.ceil(count/pageSize)})
+
 
             
         } catch (error) {
