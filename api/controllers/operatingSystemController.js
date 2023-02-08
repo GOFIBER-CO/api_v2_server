@@ -226,9 +226,9 @@ async function getPaging(req, res) {
     let pagedModel = new PagedModel(
       pageIndex,
       pageSize,
-      totalPages < 10 ?10 : totalPages,
+      totalPages,
       returnArray,
-      count<99 ? 150 : count
+      count
     );
     res.json(pagedModel);
   } catch (error) {

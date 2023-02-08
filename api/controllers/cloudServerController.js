@@ -111,9 +111,9 @@ async function getAboutToExpireCloudServer(req, res) {
       let pagedModel = new PagedModel(
         pageIndex,
         pageSize,
-        totalPages < 10 ? 10 : totalPages,
+        totalPages,
         cloudServer,
-        count < 99 ? 150 : count
+        count
       );
       res.json(pagedModel);
     } catch (error) {
@@ -494,10 +494,10 @@ async function getDeletedCloudServerByUser(req, res) {
     let pagedModel = new PagedModel(
       pageIndex,
       pageSize,
-      totalPages < 10 ? 10 : totalPages,
+      totalPages ,
       // totalPages,
       cloudServer,
-      count < 99 ? 150 : count
+      count
     );
     res.json(pagedModel);
   } catch (error) {
@@ -547,9 +547,9 @@ async function getCloudServerByUserId(req, res) {
     let pagedModel = new PagedModel(
       pageIndex,
       pageSize,
-      totalPages < 10 ? 10 : totalPages,
+      totalPages ,
       cloudServer,
-      count < 99 ? 150 : count
+      count  
     );
     res.json(pagedModel);
   } catch (error) {

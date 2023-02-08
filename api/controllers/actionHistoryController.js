@@ -56,8 +56,8 @@ class ActionHistroyController {
                 actions: returnResult  ,
                 pageSize: pageSize  , 
                 pageIndex: pageIndex,
-                count : count< 99 ? 150 : count,
-                totalPages: totalPages < 10 ? 10 : totalPages
+                count : count,
+                totalPages: totalPages
             })
 
             // const count = await ActionHistoryModel.find({}).countDocuments();
