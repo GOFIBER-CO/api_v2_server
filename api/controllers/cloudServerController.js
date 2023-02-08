@@ -13,6 +13,8 @@ const schedule = require("node-schedule");
 const expiryDateTypeToNumber = require("../../helpers/expiryDateTypeToNumber");
 const { createNotification } = require("./notificationController");
 const { setActionStatus } = require("../routes/actionMiddleWare");
+const OperatingSystems = require("../../database/entities/OperatingSystems");
+const axios = require('axios')
 
 async function switchAutoRenewServer(req, res) {
   try {
@@ -111,7 +113,7 @@ async function getAboutToExpireCloudServer(req, res) {
         pageSize,
         totalPages < 10 ? 10 : totalPages,
         cloudServer,
-        count< 99 ? 150 : count
+        count < 99 ? 150 : count
       );
       res.json(pagedModel);
     } catch (error) {
@@ -124,8 +126,6 @@ async function getAboutToExpireCloudServer(req, res) {
 }
 
 async function insertCloudServer(req, res) {
-  // console.log(req.body);
-  // return;
   try {
     var dataNow = new Date();
     req.body.code = generateRandomString();
@@ -195,20 +195,7 @@ async function insertCloudServer(req, res) {
       );
       return res.json(response);
     }
-    //câp nhật tiền của user
-    user.surplus = total;
-    _io.emit("set surplus", user.surplus);
-    let newUser = { updatedTime: Date.now(), ...user };
-    let updatedUser = await Users.findOneAndUpdate(
-      { _id: req.body.user },
-      newUser
-    );
-    if (!updatedUser) {
-      await setActionStatus(req.actionId, `Tạo cloud server`, "fail");
-      let response = new ResponseModel(0, "user No found!", null);
-      res.json(response);
-    }
-    //tạo hóa đơn
+
     const totalPrice = req.body.autoBackup
       ? server.price + server.price * 0.1
       : server.price;
@@ -223,15 +210,17 @@ async function insertCloudServer(req, res) {
 
     cloudServer.order = order._id;
 
+    const operatingSystem = await OperatingSystems.findById(req.body.operatingSystem)
+
     cloudServer.save(async function (err, newCloudServer) {
       if (err) {
         let response = new ResponseModel(-1, err.message, err);
         await setActionStatus(req.actionId, `Tạo cloud server`, "fail");
-        res.json(response);
+        return res.json(response);
       } else {
         await setActionStatus(
           req.actionId,
-          `Tạo cloud server ${newCloudServer.code}`,
+          `Bắt đầu khởi tạo cloud server ${newCloudServer.code}`,
           "success"
         );
         let response = new ResponseModel(
@@ -239,15 +228,24 @@ async function insertCloudServer(req, res) {
           "Create cloud server success!",
           newCloudServer
         );
-        // thêm id cloud đã đăng kí vào lịch sử thành toán
-        let newTransactionHistory = new TransactionHistorys({
+
+        const createCloudServer = axios.post('http://mgmt.azshci.vngcloud.com:5000/hyperv/vm', {
+            // Memory: server.ram,
+            Memory: 1,
+            VMName: req.body.cloudServerName,
+            MediaPath: operatingSystem.mediaPath,
+            SwitchName: "NEXUS3064",
+            // NumberOfCPUs: server.cpu, 
+            NumberOfCPUs: 2,
+            // VMDiskSize: server.ssd,
+        }).then(async (result) => {
+          let newTransactionHistory = new TransactionHistorys({
           code: generateRandomString(),
           transactionHistoryName: `Đăng kí Cloud Server ${cloudServer.code}`,
-          content: `Khởi tạo Cloud Server: Phí duy trì Cloud Server ${
-            cloudServer.code
-          } đến ${moment(cloudServer.expiryDate).format(
-            "DD/MM/YYYY hh:mm:ss"
-          )}`,
+          content: `Khởi tạo Cloud Server: Phí duy trì Cloud Server ${cloudServer.code
+            } đến ${moment(cloudServer.expiryDate).format(
+              "DD/MM/YYYY hh:mm:ss"
+            )}`,
           balanceBeforeTransaction: transactionHistory.balanceAfterTransaction,
           price: transactionHistory.price,
           balanceAfterTransaction: total,
@@ -256,16 +254,47 @@ async function insertCloudServer(req, res) {
           cloudServer: newCloudServer._id,
           createdTime: Date.now(),
         });
-        await newTransactionHistory.save(async function (
+
+        newTransactionHistory.save(async function (
           err,
           newTransactionHistory
         ) {
           if (err) {
             let response = new ResponseModel(-1, err.message, err);
-            res.json(response);
+            return res.json(response);
           }
         });
-        // thêm log khi tạo cloud
+          if(result){
+            user.surplus = total;
+            _io.emit("set surplus", user.surplus);
+            let newUser = { updatedTime: Date.now(), ...user };
+            let updatedUser = await Users.findOneAndUpdate(
+              { _id: req.body.user },
+              newUser
+            );
+            const updateCloudServer = await CloudServers.findByIdAndUpdate(newCloudServer._id,{
+              clusterName: result?.ClusterName,
+              cloudKey: result?.Id,
+              status: 'active'
+            })
+
+            if (!updatedUser) {
+              await setActionStatus(req.actionId, `Tạo cloud server`, "fail");
+              const updateCloudServer = await CloudServers.findByIdAndUpdate(newCloudServer._id,{
+                status: 'failed'
+              })
+              let response = new ResponseModel(0, "user No found!", null);
+              return res.json(response);
+            }
+          }else{
+            const updateCloudServer = await CloudServers.findByIdAndUpdate(newCloudServer._id,{
+              status: 'failed'
+            })
+          }
+         
+        }).catch(error => console.log(error))
+
+
         let newLog = new Logs({
           code: generateRandomString(),
           logName: "Đăng kí Cloud Server",
@@ -275,16 +304,16 @@ async function insertCloudServer(req, res) {
           status: 1,
           completionTime: Date.now(),
         });
-        await newLog.save(async function (err, newLog) {
+        newLog.save(async function (err, newLog) {
           if (err) {
             let response = new ResponseModel(-1, err.message, err);
             res.json(response);
           }
         });
 
-        res.json(response);
+        return res.json(response);
       }
-    });
+    })
   } catch (error) {
     let response = new ResponseModel(404, error.message, error);
     res.status(404).json(response);
@@ -413,7 +442,7 @@ async function getPaging(req, res) {
 
     let count = await CloudServers.find(searchObj).countDocuments();
     let totalPages = Math.ceil(count / pageSize);
-    console.log(count,'totalPages');
+    console.log(count, 'totalPages');
     let pagedModel = new PagedModel(
       pageIndex,
       pageSize,
@@ -468,7 +497,7 @@ async function getDeletedCloudServerByUser(req, res) {
       totalPages < 10 ? 10 : totalPages,
       // totalPages,
       cloudServer,
-      count< 99 ? 150 : count
+      count < 99 ? 150 : count
     );
     res.json(pagedModel);
   } catch (error) {
@@ -516,11 +545,11 @@ async function getCloudServerByUserId(req, res) {
     let count = await CloudServers.find(searchObj).countDocuments();
     let totalPages = Math.ceil(count / pageSize);
     let pagedModel = new PagedModel(
-      pageIndex ,
+      pageIndex,
       pageSize,
       totalPages < 10 ? 10 : totalPages,
       cloudServer,
-      count< 99 ? 150 : count
+      count < 99 ? 150 : count
     );
     res.json(pagedModel);
   } catch (error) {
@@ -747,9 +776,8 @@ async function cloudServerExtend(req, res) {
         let newTransactionHistory = new TransactionHistorys({
           code: generateRandomString(),
           transactionHistoryName: `Gia hạn Cloud Server ${cloudServer.code}`,
-          content: `Gia hạn Cloud Server: Phí duy trì Cloud Server ${
-            cloudServer.code
-          } đến ${moment(dataNow).format("DD/MM/YYYY hh:mm:ss")}`,
+          content: `Gia hạn Cloud Server: Phí duy trì Cloud Server ${cloudServer.code
+            } đến ${moment(dataNow).format("DD/MM/YYYY hh:mm:ss")}`,
           balanceBeforeTransaction: transactionHistory.balanceAfterTransaction,
           price: transactionHistory.price,
           balanceAfterTransaction: total,
@@ -906,9 +934,8 @@ async function cloudServerUpgradec(req, res) {
         let newTransactionHistory = new TransactionHistorys({
           code: generateRandomString(),
           transactionHistoryName: `Nâng cấp Cloud Server ${cloudServer.code}`,
-          content: `Nâng cấp Cloud Server: Phí duy trì Cloud Server ${
-            cloudServer.code
-          } đến ${moment(dataNow).format("DD/MM/YYYY hh:mm:ss")}`,
+          content: `Nâng cấp Cloud Server: Phí duy trì Cloud Server ${cloudServer.code
+            } đến ${moment(dataNow).format("DD/MM/YYYY hh:mm:ss")}`,
           balanceBeforeTransaction: transactionHistory.balanceAfterTransaction,
           price: transactionHistory.price,
           balanceAfterTransaction: total,
@@ -1019,7 +1046,7 @@ async function autoRenewCloudServer() {
             //tính ngày hêt  hạn của cloud
             cloudServer.expiryDate = new Date(
               new Date(item.expiryDate).getTime() +
-                expiryDateTypeToNumber(item.server?.expiryDateType)
+              expiryDateTypeToNumber(item.server?.expiryDateType)
             );
 
             let newCloudServer = { updatedTime: Date.now(), ...cloudServer };

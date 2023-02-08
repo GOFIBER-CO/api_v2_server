@@ -25,6 +25,9 @@ let OperatingSystemchema = new Schema({
     updatedTime: {
         type: Date
     },
+    mediaPath: {
+        type: String,
+    }
 }, {versionKey: false});
 
 OperatingSystemchema.index({'operatingSystemName': 'text'});

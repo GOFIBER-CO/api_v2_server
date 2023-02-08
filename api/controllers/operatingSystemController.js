@@ -5,6 +5,40 @@ const path = require("path");
 const generateRandomString = require("../../helpers/generateRandomString");
 const { setActionStatus } = require("../routes/actionMiddleWare");
 
+async function initOperatingSystem(req, res){
+  try {
+    const data = await fetch('http://mgmt.azshci.vngcloud.com:5000/hyperv/media')
+    const result = await data.json()
+    if(result){
+      const returnRes = result.filter(item => item.MediaPath?.includes('vhdx') || item.MediaPath?.includes('VHDx'))
+      const newOp = await Promise.all(returnRes.map(async (item)=> {
+        let operatingSystemParentName = 'Centos'
+        if(item.Name?.toLowerCase().includes('windows'))
+          operatingSystemParentName = 'Window'
+        else if(item.Name?.toLowerCase().includes('debian'))
+          operatingSystemParentName = 'Debian'
+        else if(item.Name?.toLowerCase().includes('ubuntu'))
+          operatingSystemParentName = 'Ubuntu'
+
+        const parentOperatingSystem = await OperatingSystems.findOne({operatingSystemName: operatingSystemParentName})
+
+        return await OperatingSystems.create({
+          code: generateRandomString(),
+          operatingSystemName: item.Name?.replace('H2-G2', '').replace('-G2',''),
+          mediaPath: item.MediaPath,
+          createdTime: new Date(),
+          parentID: parentOperatingSystem._id
+        })
+      }))
+      return res.status(200).json({newOperatingSystem: newOp})
+    }
+    return res.status(404).json({message: 'Not found any operating system'})
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({message: 'Failed'})
+  }
+}
+
 async function insertOperatingSystem(req, res) {
   // if (req.actions.includes("insertOperatingSystem")) {
     try {
@@ -100,7 +134,7 @@ async function updateOperatingSystem(req, res) {
 
 async function deleteOperatingSystem(req, res) {
   // if (isValidObjectId(req.params.id)) {
-  if (req.actions.includes("deleteOperatingSystem")) {
+  // if (req.actions.includes("deleteOperatingSystem")) {
     if (req.params.id) {
       try {
         const thisOperatingSystem = await OperatingSystems.findById(req.params.id)
@@ -131,10 +165,10 @@ async function deleteOperatingSystem(req, res) {
         .status(404)
         .json(new ResponseModel(404, "OperatingSystemId is not valid!", null));
     }
-  } else {
-    await setActionStatus(req.actionId, `Xoá hệ điều hành`, 'fail')
-    res.sendStatus(403);
-  }
+  // } else {
+  //   await setActionStatus(req.actionId, `Xoá hệ điều hành`, 'fail')
+  //   res.sendStatus(403);
+  // }
 }
 
 async function getOperatingSystemById(req, res) {
@@ -302,3 +336,4 @@ exports.getOperatingSystemById = getOperatingSystemById;
 exports.getOperatingSystem = getOperatingSystem;
 exports.getOperatingSystemChildren = getOperatingSystemChildren;
 exports.getPaging = getPaging;
+exports.initOperatingSystem = initOperatingSystem

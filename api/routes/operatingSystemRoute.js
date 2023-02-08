@@ -11,5 +11,6 @@ router.post('/getById', middlewares.authentication, operatingSystemController.ge
 router.get('/getPaging', middlewares.authentication, operatingSystemController.getPaging);
 router.get('/getOperatingSystem', middlewares.authentication, operatingSystemController.getOperatingSystem);
 router.get('/getOperatingSystemChildren', middlewares.authentication, operatingSystemController.getOperatingSystemChildren);
+router.get('/initOperatingSystem', operatingSystemController.initOperatingSystem)
 
 module.exports = router;

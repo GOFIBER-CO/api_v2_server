@@ -8,6 +8,12 @@ let CloudServerchema = new Schema(
     code: {
       type: String,
     },
+    cloudKey:{
+      type: String,
+    },
+    clusterName: {
+      type: String,
+    },
     cloudServerName: {
       type: String,
       required: true,
@@ -37,8 +43,8 @@ let CloudServerchema = new Schema(
       ref: "Servers",
     },
     status: {
-      type: Boolean,
-      default: true,
+      type: String,
+      default: 'not-active',
     },
     expiryDate: {
       type: Date,

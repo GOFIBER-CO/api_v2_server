@@ -1,0 +1,55 @@
+[{
+  "_id": {
+    "$oid": "6368d67ed5f311a70b4511f2"
+  },
+  "code": "940AQuwJeg",
+  "operatingSystemName": "Window",
+  "parentID": "",
+  "file": "icon-windows.svg",
+  "createdTime": {
+    "$date": {
+      "$numberLong": "1667815038744"
+    }
+  },
+  "img": "https://my.vultr.com/_images/os/icon-windows.svg"
+},{
+  "_id": {
+    "$oid": "6368df82deeac0f014c6382b"
+  },
+  "code": "7EfsZagNRD",
+  "operatingSystemName": "Ubuntu",
+  "parentID": "",
+  "file": "icon-ubuntu.svg",
+  "createdTime": {
+    "$date": {
+      "$numberLong": "1667817346490"
+    }
+  }
+},{
+  "_id": {
+    "$oid": "6368dfaadeeac0f014c6382f"
+  },
+  "code": "kKqBe8YCx6",
+  "operatingSystemName": "Centos",
+  "parentID": "",
+  "file": "icon-centos.svg",
+  "createdTime": {
+    "$date": {
+      "$numberLong": "1667817386588"
+    }
+  }
+},{
+  "_id": {
+    "$oid": "6368dfd2deeac0f014c63833"
+  },
+  "code": "WKtK4bH24u",
+  "operatingSystemName": "Debian",
+  "parentID": "",
+  "file": "icon-debian.svg",
+  "createdTime": {
+    "$date": {
+      "$numberLong": "1667817426159"
+    }
+  },
+  "img": "https://my.vultr.com/_images/os/icon-windows.svg"
+}]
