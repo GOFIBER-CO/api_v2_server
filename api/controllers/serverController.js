@@ -122,9 +122,9 @@ async function getPaging(req, res) {
     let pagedModel = new PagedModel(
       pageIndex, 
       pageSize, 
-      totalPages< 10 ?10 : totalPages, 
+      totalPages, 
       servers, 
-      count < 99 ? 150 : count
+      count 
       );
     //   pageIndex,
     //   pageSize,

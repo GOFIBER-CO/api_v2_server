@@ -164,9 +164,9 @@ async function getPaging(req, res) {
     let pagedModel = new PagedModel(
       pageIndex, 
       pageSize, 
-      totalPages< 10 ? 10 : totalPages, 
+      totalPages, 
       returnResult, 
-      count< 99 ? 150 : count
+      count
       );
     res.json(pagedModel);
   } catch (error) {
@@ -207,9 +207,9 @@ async function getSupportByUserId(req, res) {
     let pagedModel = new PagedModel(
       pageIndex, 
       pageSize, 
-      totalPages< 10 ? 10 : totalPages, 
+      totalPages, 
       support, 
-      count < 99 ? 150 : count
+      count
       );
     res.json(pagedModel);
   } catch (error) {

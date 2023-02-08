@@ -50,8 +50,8 @@ class OrderController {
           order: result,
           pageSize: pageSize,
           pageIndex: pageIndex,
-          totalItem: count <99 ? 150 : count,
-          totalPages: totalPages < 10 ? 10 :totalPages ,
+          totalItem: count,
+          totalPages:totalPages ,
         });
     } catch (error) {
       console.log(error);
