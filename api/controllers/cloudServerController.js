@@ -278,9 +278,18 @@ async function insertCloudServer(req, res) {
               status: 'active'
             })
 
+            _io.emit('create cloudserver', {
+              id: newCloudServer._id,
+              status: 'active'
+            })
+
             if (!updatedUser) {
               await setActionStatus(req.actionId, `Tạo cloud server`, "fail");
               const updateCloudServer = await CloudServers.findByIdAndUpdate(newCloudServer._id,{
+                status: 'failed'
+              })
+              _io.emit('create cloudserver', {
+                id: newCloudServer._id,
                 status: 'failed'
               })
               let response = new ResponseModel(0, "user No found!", null);
@@ -288,6 +297,10 @@ async function insertCloudServer(req, res) {
             }
           }else{
             const updateCloudServer = await CloudServers.findByIdAndUpdate(newCloudServer._id,{
+              status: 'failed'
+            })
+            _io.emit('create cloudserver', {
+              id: newCloudServer._id,
               status: 'failed'
             })
           }

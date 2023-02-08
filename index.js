@@ -60,7 +60,6 @@ app.use("/api/roleAction", roleActionRoute);
 app.use("/api/support", supportRoute);
 app.use("/api/paymentInstruction", paymentInstructionRoute);
 app.use("/api/notification", notificationRoute);
-logRoute;
 app.use("/api/transactionHistory", transactionHistoryRoute);
 app.use("/api/log", logRoute);
 app.use("/api/deposit-guide", depositGuideRouter);
