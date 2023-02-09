@@ -6,5 +6,6 @@ router.get('/init-ip', IpController.initIpController)
 router.get('/getPaging', IpController.getPaging)
 router.patch('/:id', IpController.updateIp)
 router.post('/create-ip', IpController.createIp)
+router.get('/:id',IpController.getById)
 
 module.exports = router

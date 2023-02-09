@@ -65,7 +65,7 @@ class IpController {
     async updateIp(req, res){
         try {
             const id = req.params.id || null
-            const ip = req.body.ip
+            const ip = req.body.id
 
             if(!id){
                 return res.status(400).json({message: "Id can not be empty"})
@@ -74,12 +74,22 @@ class IpController {
             if(!ip){
                 return res.status(400).json({message: "Ip can not be empty"})
             }
-            const result = await IpModel.findByIdAndUpdate(req.params.id, {ip: req.body.ip})
+            const result = await IpModel.findByIdAndUpdate(id, {ip: ip})
 
             return res.status(200).json({message: "Success", ip: result})
         } catch (error) {
             console.log(error)
             return res.status(500).json({message: 'Failed'})
+        }
+    }
+
+    async getById(req, res){
+        try {
+            const result = await IpModel.findById(req.params.id)
+            return res.status(200).json({message: "Success", ip: result})
+        } catch (error) {
+            console.log(error)
+            return res.status(500).json({message: 'Fail'})
         }
     }
 }

@@ -1,8 +1,12 @@
-const priceController = require('../../database/entities/Price')
-
+const priceModel = require('../../database/entities/Price')
 class PriceController {
     async initPrice(){
-
+        try {
+            
+        } catch (error) {
+            console.log(error)
+            return res.status(500).json({message: 'Failed'})
+        }
     }
 }
 
