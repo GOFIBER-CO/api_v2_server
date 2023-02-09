@@ -5,7 +5,6 @@ const generateRandomString = require("../../helpers/generateRandomString");
 const { setActionStatus } = require("../routes/actionMiddleWare");
 
 async function insertServer(req, res) {
-  console.log(req.body, `oooo`);
   // return;
   try {
     req.body.code = generateRandomString();

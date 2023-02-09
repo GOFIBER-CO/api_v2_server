@@ -26,7 +26,6 @@ async function insertVmConfig(req, res) {
 }
 async function deleteVmConfig(req, res) {
   const { id } = req.params;
-  // console.log('id: ', id);
   if (id) {
     try {
       let noti = await VMConfig.findByIdAndDelete(id);
@@ -49,8 +48,6 @@ async function deleteVmConfig(req, res) {
   }
 }
 async function updateVmConfig(req, res) {
-  console.log(req.params.id);
-  // return
   try {
     const newVmConfig = { ...req.body, updatedTime: Date.now() };
     const updatedVmConfig = await VMConfig.findByIdAndUpdate(

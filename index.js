@@ -44,8 +44,10 @@ const actionHistoryRouter = require("./api/routes/actionHistoryRouter");
 const {
   autoRenewCloudServer,
   notifyCloudServerAboutToExpire,
+  autoExpiredServer,
 } = require("./api/controllers/cloudServerController");
 const webSupportRouter = require("./api/routes/webSupportRoute")
+const ipRouter = require('./api/routes/Ip')
 
 //import routes
 app.use("/api/user", userRoute);
@@ -69,6 +71,7 @@ app.use("/api/snapshot", snapshotRoute);
 app.use("/api/vmConfig", vmConfigRoute);
 app.use("/api/action-history", actionHistoryRouter)
 app.use("/api/webSupport", webSupportRouter);
+app.use("/api/ip", ipRouter)
 
 const server = require("http").Server(app);
 const io = require("socket.io")(server, {
@@ -79,6 +82,7 @@ const io = require("socket.io")(server, {
 
 autoRenewCloudServer();
 notifyCloudServerAboutToExpire();
+autoExpiredServer();
 
 socket(io);
 

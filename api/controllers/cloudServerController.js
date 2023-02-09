@@ -237,36 +237,38 @@ async function insertCloudServer(req, res) {
             SwitchName: "NEXUS3064",
             // NumberOfCPUs: server.cpu, 
             NumberOfCPUs: 2,
+            vlan: 1103,
+            VMDiskSize: 30,
             // VMDiskSize: server.ssd,
         }).then(async (result) => {
-          let newTransactionHistory = new TransactionHistorys({
-          code: generateRandomString(),
-          transactionHistoryName: `Đăng kí Cloud Server ${cloudServer.code}`,
-          content: `Khởi tạo Cloud Server: Phí duy trì Cloud Server ${cloudServer.code
-            } đến ${moment(cloudServer.expiryDate).format(
-              "DD/MM/YYYY hh:mm:ss"
-            )}`,
-          balanceBeforeTransaction: transactionHistory.balanceAfterTransaction,
-          price: transactionHistory.price,
-          balanceAfterTransaction: total,
-          status: 2,
-          user: req.body.user,
-          cloudServer: newCloudServer._id,
-          createdTime: Date.now(),
-        });
-
-        newTransactionHistory.save(async function (
-          err,
-          newTransactionHistory
-        ) {
-          if (err) {
-            let response = new ResponseModel(-1, err.message, err);
-            return res.json(response);
-          }
-        });
-          if(result){
+          if(result.data){
+            let newTransactionHistory = new TransactionHistorys({
+              code: generateRandomString(),
+              transactionHistoryName: `Đăng kí Cloud Server ${cloudServer.code}`,
+              content: `Khởi tạo Cloud Server: Phí duy trì Cloud Server ${cloudServer.code
+                } đến ${moment(cloudServer.expiryDate).format(
+                  "DD/MM/YYYY hh:mm:ss"
+                )}`,
+              balanceBeforeTransaction: transactionHistory.balanceAfterTransaction,
+              price: transactionHistory.price,
+              balanceAfterTransaction: total,
+              status: 2,
+              user: req.body.user,
+              cloudServer: newCloudServer._id,
+              createdTime: Date.now(),
+            });
+    
+            newTransactionHistory.save(async function (
+              err,
+              newTransactionHistory
+            ) {
+              if (err) {
+                let response = new ResponseModel(-1, err.message, err);
+                return res.json(response);
+              }
+            });
             user.surplus = total;
-            _io.emit("set surplus", user.surplus);
+            _io.emit('set surplus', user.surplus);
             let newUser = { updatedTime: Date.now(), ...user };
             let updatedUser = await Users.findOneAndUpdate(
               { _id: req.body.user },
@@ -305,7 +307,15 @@ async function insertCloudServer(req, res) {
             })
           }
          
-        }).catch(error => console.log(error))
+        }).catch(async error => {
+          const updateCloudServer = await CloudServers.findByIdAndUpdate(newCloudServer._id,{
+            status: 'failed'
+          })
+          _io.emit('create cloudserver', {
+            id: newCloudServer._id,
+            status: 'failed'
+          })
+        })
 
 
         let newLog = new Logs({
@@ -371,6 +381,7 @@ async function deleteCloudServer(req, res) {
       const thisCloudServer = await CloudServers.findById(req.parms.id);
       let cloudServer = await CloudServers.findByIdAndUpdate(req.params.id, {
         isDeleted: true,
+        status: 'not-active'
       });
       if (!cloudServer) {
         await setActionStatus(
@@ -1038,7 +1049,6 @@ async function autoRenewCloudServer() {
                 `Tự động gia hạn cloud server ${item.cloudServerName} không thành công, không tìm thấy hoá đơn`
               );
             }
-            console.log(order);
             let newOrder = {
               updatedTime: Date.now(),
               totalPrice:
@@ -1144,6 +1154,25 @@ async function autoRenewCloudServer() {
   }
 }
 
+async function autoExpiredServer() {
+  const cron = "0 0 * * *";
+  try {
+    const job = schedule.scheduleJob(cron, async function () {
+      const cloudServer = await CloudServers.updateMany({
+        expiryDate: {
+          $lte: new Date(),
+        },
+        isAutoRenew: false,
+        isDeleted: {
+          $ne: true,
+        },
+      }, {status: 'expired'})
+    });
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 async function notifyCloudServerAboutToExpire() {
   const cron = "0 0 * * *";
   try {
@@ -1173,7 +1202,6 @@ async function notifyCloudServerAboutToExpire() {
   }
 }
 async function updateNameCloudById(req, res) {
-  console.log(`req.body`, req.body, req.params);
   try {
     let newCloudServer = { updatedTime: Date.now(), ...req.body };
     let updatedCloudServer = await CloudServers.findOneAndUpdate(
@@ -1219,39 +1247,31 @@ async function getCloudServersById(req, res) {
     .populate("server")
     .populate("operatingSystem")
     .populate("order");
-  // console.log("result: ", result);
   let response = new ResponseModel(200, `OKE`, result);
   res.status(200).json(response);
 }
 async function updateDataOfServerInCloudServerById(req, res) {
   const { id } = req.params;
   const { price } = req.body;
-  // console.log('server000: ', req.body);
 
-  // console.log("idServer: ", idServer);
-  // return;
   try {
     const result = await CloudServers.findByIdAndUpdate(id, {
       server: req.body?._id,
     });
-    console.log("result: ", result);
     if (result) {
       const updateOrderById = await Order.findByIdAndUpdate(result?.order, {
         product: result?.server,
         totalPrice: price,
         updatedAt: Date.now(),
       });
-      console.log("updateOrderById: ", updateOrderById);
       let response = new ResponseModel(1, "Upgrade success!", result);
       res.status(200).json(response);
     }
-    // console.log("result: ", result);
   } catch (error) {
     let response = new ResponseModel(404, error.message, error);
     res.status(404).json(response);
   }
 
-  // console.log(`hahahah`, req.body._id);
   // const order = await Order.create({
   //   code: generateRandomString(),
   //   user: req.body.user,
@@ -1284,3 +1304,4 @@ exports.updateNameCloudById = updateNameCloudById;
 exports.getCloudServersById = getCloudServersById;
 exports.updateDataOfServerInCloudServerById =
   updateDataOfServerInCloudServerById;
+exports.autoExpiredServer = autoExpiredServer

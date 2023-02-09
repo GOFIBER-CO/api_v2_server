@@ -8,6 +8,10 @@ let CloudServerchema = new Schema(
     code: {
       type: String,
     },
+    ip:{
+      type: mongoose.Types.ObjectId,
+      ref: 'ips', 
+    },
     cloudKey:{
       type: String,
     },
