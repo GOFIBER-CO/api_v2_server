@@ -5,11 +5,11 @@ class IpController {
         try {
             const arrayOfIp = []
             
-            for (let i = 0; i <= 256; i++){
-                arrayOfIp.push(`103.37.60.${i}`)
-            }
+            // for (let i = 0; i <= 256; i++){
+            //     arrayOfIp.push(`103.37.60.${i}`)
+            // }
 
-            for(let i = 0; i <= 255; i++){
+            for(let i = 115; i <= 255; i++){
                 arrayOfIp.push(`103.37.61.${i}`)
             }
 

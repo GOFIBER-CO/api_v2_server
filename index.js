@@ -48,6 +48,7 @@ const {
 } = require("./api/controllers/cloudServerController");
 const webSupportRouter = require("./api/routes/webSupportRoute")
 const ipRouter = require('./api/routes/Ip')
+const priceRouter = require('./api/routes/priceRouter')
 
 //import routes
 app.use("/api/user", userRoute);
@@ -72,6 +73,7 @@ app.use("/api/vmConfig", vmConfigRoute);
 app.use("/api/action-history", actionHistoryRouter)
 app.use("/api/webSupport", webSupportRouter);
 app.use("/api/ip", ipRouter)
+app.use("/api/price", priceRouter)
 
 const server = require("http").Server(app);
 const io = require("socket.io")(server, {

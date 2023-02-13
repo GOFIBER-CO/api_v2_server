@@ -1,12 +1,16 @@
 const mongoose = require('mongoose')
 
 const Price = mongoose.Schema({
-    objectName: {
-        type: String,
+    ram: {
+        type: Number,
         required: true,
     },
-    price: {
-        type: String, 
+    ssd: {
+        type: Number, 
+        required: true,
+    },
+    cpu: {
+        type: Number, 
         required: true,
     }
 })

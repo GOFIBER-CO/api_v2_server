@@ -14,7 +14,9 @@ const expiryDateTypeToNumber = require("../../helpers/expiryDateTypeToNumber");
 const { createNotification } = require("./notificationController");
 const { setActionStatus } = require("../routes/actionMiddleWare");
 const OperatingSystems = require("../../database/entities/OperatingSystems");
-const axios = require('axios')
+const axios = require('axios');
+const Ip = require("../../database/entities/Ip");
+const Socket = require("../../database/entities/Socket");
 
 async function switchAutoRenewServer(req, res) {
   try {
@@ -127,6 +129,7 @@ async function getAboutToExpireCloudServer(req, res) {
 
 async function insertCloudServer(req, res) {
   try {
+    const users = await Socket.findOne({ user: req.userId })
     var dataNow = new Date();
     req.body.code = generateRandomString();
     let cloudServer = new CloudServers(req.body);
@@ -230,18 +233,20 @@ async function insertCloudServer(req, res) {
         );
 
         const createCloudServer = axios.post('http://mgmt.azshci.vngcloud.com:5000/hyperv/vm', {
-            // Memory: server.ram,
-            Memory: 1,
-            VMName: req.body.cloudServerName,
-            MediaPath: operatingSystem.mediaPath,
-            SwitchName: "NEXUS3064",
-            // NumberOfCPUs: server.cpu, 
-            NumberOfCPUs: 2,
-            vlan: 1103,
-            VMDiskSize: 30,
-            // VMDiskSize: server.ssd,
+          // Memory: server.ram,
+          Memory: 1,
+          VMName: req.body.cloudServerName,
+          MediaPath: operatingSystem.mediaPath,
+          SwitchName: "NEXUS3064",
+          // NumberOfCPUs: server.cpu, 
+          NumberOfCPUs: 2,
+          vlan: 1103,
+          VMDiskSize: 30,
+          // VMDiskSize: server.ssd,
         }).then(async (result) => {
-          if(result.data){
+          if (result.data) {
+            let time = 0
+
             let newTransactionHistory = new TransactionHistorys({
               code: generateRandomString(),
               transactionHistoryName: `Đăng kí Cloud Server ${cloudServer.code}`,
@@ -257,7 +262,7 @@ async function insertCloudServer(req, res) {
               cloudServer: newCloudServer._id,
               createdTime: Date.now(),
             });
-    
+
             newTransactionHistory.save(async function (
               err,
               newTransactionHistory
@@ -268,50 +273,118 @@ async function insertCloudServer(req, res) {
               }
             });
             user.surplus = total;
-            _io.emit('set surplus', user.surplus);
+            _io.to(users.socketId).emit('set surplus', user.surplus);
             let newUser = { updatedTime: Date.now(), ...user };
             let updatedUser = await Users.findOneAndUpdate(
               { _id: req.body.user },
               newUser
             );
-            const updateCloudServer = await CloudServers.findByIdAndUpdate(newCloudServer._id,{
-              clusterName: result?.ClusterName,
-              cloudKey: result?.Id,
+            const updateCloudServer = await CloudServers.findByIdAndUpdate(newCloudServer._id, {
+              clusterName: result?.data.ClusterName,
+              cloudKey: result?.data?.Id,
+              password: result?.data.AdminPassword,
               status: 'active'
             })
 
-            _io.emit('create cloudserver', {
+            _io.to(users.socketId).emit('create cloudserver', {
               id: newCloudServer._id,
               status: 'active'
             })
 
             if (!updatedUser) {
               await setActionStatus(req.actionId, `Tạo cloud server`, "fail");
-              const updateCloudServer = await CloudServers.findByIdAndUpdate(newCloudServer._id,{
+              const updateCloudServer = await CloudServers.findByIdAndUpdate(newCloudServer._id, {
                 status: 'failed'
               })
-              _io.emit('create cloudserver', {
+              _io.to(users.socketId).emit('create cloudserver', {
                 id: newCloudServer._id,
                 status: 'failed'
               })
               let response = new ResponseModel(0, "user No found!", null);
               return res.json(response);
             }
-          }else{
-            const updateCloudServer = await CloudServers.findByIdAndUpdate(newCloudServer._id,{
+            let isSetIp = false
+            const waitForIp = setInterval(async () => {
+              try {
+                
+              
+              const result_ip = await axios.get(`http://mgmt.azshci.vngcloud.com:5000/hyperv/vm/${result.data.ClusterName}/${result.data.Id}`)
+              if (result_ip.data?.[0]?.StatusDescriptions?.includes('Operating normally')) {
+                const ip = await Ip.findOne({ status: true })
+                if (ip) {
+                  try {
+                    const class_3 = ip?.ip.split('.')[2]
+                    const setIp = await axios.post(`http://mgmt.azshci.vngcloud.com:5000/hyperv/vm/network`, {
+                      ClusterName: result.data.ClusterName,
+                      VMId: result.data.Id,
+                      VMNetwork: {
+                        MacAddress: result_ip.data?.[0]?.VMNetwork?.MacAddress,
+                        IPConfiguration: {
+                          IPAddresses: ip.ip,
+                          // IPAddresses: '103.37.61.113',
+                          Subnet: "255.255.255.0",
+                          // DefaultGateway: class_3 == '61' ? "103.37.61.1" : "103.37.60.1",
+                          DefaultGateway:'103.37.61.1',
+                          DNSServer: [
+                            "1.1.1.1",
+                            "8.8.8.8"
+                          ]
+                        },
+                        SwitchName: "NEXUS3064",
+                        VlanId: 1103
+                      }
+                    })
+                    if(setIp.data){
+                      const updateIpForServer = await CloudServers.findByIdAndUpdate(newCloudServer._id, {
+                        ip: ip._id
+                      })
+                      const updateStatusIp = await Ip.findByIdAndUpdate(ip._id, { status: false })
+                      _io.to(users.socketId).emit('set ip success', {
+                        id: newCloudServer._id,
+                        ip: ip
+                      })
+                      isSetIp = true
+                    }else{
+                      _io.to(users.socketId).emit('set ip failed', {
+                        id: newCloudServer._id,
+                      })
+                    }
+
+                  } catch (error) {
+                    console.log(error)
+                  }
+                }
+                clearInterval(waitForIp)
+              } else {
+                if (time == 600000) {
+                  if (!isSetIp) {
+                    _io.to(users.socketId).emit('set ip failed', {
+                      id: newCloudServer._id,
+                    })
+                  }
+                  clearInterval(waitForIp)
+                }
+              }
+            } catch (error) {
+                console.log(error)
+            }
+              time += 60000
+            }, 60000)
+          } else {
+            const updateCloudServer = await CloudServers.findByIdAndUpdate(newCloudServer._id, {
               status: 'failed'
             })
-            _io.emit('create cloudserver', {
+            _io.to(users.socketId).emit('create cloudserver', {
               id: newCloudServer._id,
               status: 'failed'
             })
           }
-         
+
         }).catch(async error => {
-          const updateCloudServer = await CloudServers.findByIdAndUpdate(newCloudServer._id,{
+          const updateCloudServer = await CloudServers.findByIdAndUpdate(newCloudServer._id, {
             status: 'failed'
           })
-          _io.emit('create cloudserver', {
+          _io.to(users.socketId).emit('create cloudserver', {
             id: newCloudServer._id,
             status: 'failed'
           })
@@ -426,6 +499,7 @@ async function getCloudServerById(req, res) {
       })
         .populate("area")
         .populate("server")
+        .populate("ip")
         .populate("operatingSystem");
       res.json(cloudServer);
     } catch (error) {
@@ -462,6 +536,7 @@ async function getPaging(req, res) {
       })
       .populate("area")
       .populate("server")
+      .populate("ip")
       .populate("operatingSystem");
 
     let count = await CloudServers.find(searchObj).countDocuments();
@@ -511,6 +586,7 @@ async function getDeletedCloudServerByUser(req, res) {
       })
       .populate("area")
       .populate("server")
+      .populate("ip")
       .populate("operatingSystem");
 
     let count = await CloudServers.find(searchObj).countDocuments();
@@ -518,7 +594,7 @@ async function getDeletedCloudServerByUser(req, res) {
     let pagedModel = new PagedModel(
       pageIndex,
       pageSize,
-      totalPages ,
+      totalPages,
       // totalPages,
       cloudServer,
       count
@@ -563,6 +639,7 @@ async function getCloudServerByUserId(req, res) {
       })
       .populate("area")
       .populate("server")
+      .populate("ip")
       .populate("operatingSystem")
       .populate("order");
 
@@ -571,9 +648,9 @@ async function getCloudServerByUserId(req, res) {
     let pagedModel = new PagedModel(
       pageIndex,
       pageSize,
-      totalPages ,
+      totalPages,
       cloudServer,
-      count  
+      count
     );
     res.json(pagedModel);
   } catch (error) {
@@ -604,6 +681,7 @@ async function getCloudServerDelete(req, res) {
       })
       .populate("area")
       .populate("server")
+      .populate("ip")
       .populate("operatingSystem");
 
     let count = await CloudServers.find(searchObj).countDocuments();
@@ -643,6 +721,7 @@ async function getCloudServerExpiresPaging(req, res) {
       })
       .populate("area")
       .populate("server")
+      .populate("ip")
       .populate("operatingSystem");
 
     let dateNow = new Date();
@@ -721,6 +800,8 @@ async function getCloudServerExpiresPaging(req, res) {
 
 async function cloudServerExtend(req, res) {
   try {
+    const users = await Socket.findOne({ user: req.userId })
+
     //pram
     // id
     // totalPrice ="49000"
@@ -774,7 +855,7 @@ async function cloudServerExtend(req, res) {
       } else {
         //update số dư tài khoản
         user.surplus = total;
-        _io.emit("set surplus", user.surplus);
+        _io.to(users.socketId).emit("set surplus", user.surplus);
         let newUser = { updatedTime: Date.now(), ...user };
         let updatedUser = await Users.findOneAndUpdate(
           { _id: user._id },
@@ -855,6 +936,7 @@ async function cloudServerExtend(req, res) {
 
 async function cloudServerUpgradec(req, res) {
   try {
+    const users = await Socket.findOne({ user: req.userId })
     //pram
     // id
     // serverId
@@ -932,7 +1014,7 @@ async function cloudServerUpgradec(req, res) {
       } else {
         //update số dư tài khoản
         user.surplus = total;
-        _io.emit("set surplus", user.surplus);
+        _io.to(users.socketId).emit("set surplus", user.surplus);
         let newUser = { updatedTime: Date.now(), ...user };
         let updatedUser = await Users.findOneAndUpdate(
           { _id: user._id },
@@ -1087,7 +1169,10 @@ async function autoRenewCloudServer() {
             } else {
               //update số dư tài khoản
               user.surplus = total;
-              _io.emit("set surplus", user.surplus);
+              const socket = await Socket.findOne({
+                user: user._id
+              })
+              _io.to(socket.socketId).emit("set surplus", user.surplus);
               let newUser = { updatedTime: Date.now(), ...user };
               let updatedUser = await Users.findOneAndUpdate(
                 { _id: user._id },
@@ -1166,7 +1251,7 @@ async function autoExpiredServer() {
         isDeleted: {
           $ne: true,
         },
-      }, {status: 'expired'})
+      }, { status: 'expired' })
     });
   } catch (error) {
     console.log(error);
@@ -1246,6 +1331,7 @@ async function getCloudServersById(req, res) {
     .populate("area")
     .populate("server")
     .populate("operatingSystem")
+    .populate("ip")
     .populate("order");
   let response = new ResponseModel(200, `OKE`, result);
   res.status(200).json(response);
